@@ -4,7 +4,7 @@ services:
     image: GITHUB_IMAGE_NAME
     restart: unless-stopped
     ports:
-      - "127.0.0.1:$EXPOSE_PORT:3000"
+      - "127.0.0.1:$EXPOSE_PORT:8000"
 #    volumes:
 #      - ./public:/app/public
 #      - ./.next:/app/.next
