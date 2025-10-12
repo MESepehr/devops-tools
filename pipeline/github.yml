@@ -9,12 +9,12 @@ permissions:
   packages: write
 
 env:
-  APP_NAME: "Homasa"
-  IMAGE_NAME: "ghcr.io/${{ secrets.GIT_DOCKER_USER }}/homasa"
-  SRC_DIRECTORY: "./homasa/"
+  APP_NAME: ${{ vars.PRODUCT_NAME }}
+  IMAGE_NAME: "ghcr.io/${{ secrets.GIT_DOCKER_USER }}/${{ vars.PRODUCT_NAME_LOWER }}"
+  SRC_DIRECTORY: "./${{ vars.DEPLOY_PATH }}/"
   BRANCH_NAME: 'refs/heads/main'
-  ENV_PATH: '.env'
-  ENV_SECRET: ${{ secrets.PRODUCTION_ENV }}
+  # ENV_PATH: '.env'
+  # ENV_SECRET: ${{ secrets.PRODUCTION_ENV }}
   GIT_USER: ${{ secrets.GIT_DOCKER_USER }}
   GIT_TOKEN: ${{ secrets.GIT_DOCKER_TOKEN }}
   SERVER_KEY: ${{ secrets.SERVER_KEY }}
@@ -36,12 +36,12 @@ jobs:
         username: ${{ env.GIT_USER }}
         password: ${{ env.GIT_TOKEN }}
 
-    - name: Set .env file
-      if: github.ref == ${{ env.BRANCH_NAME }}
-      uses: 1arp/create-a-file-action@0.4.5
-      with:
-        file: ${{ env.SRC_DIRECTORY }}${{ env.ENV_PATH }}
-        content: ${{ env.ENV_SECRET }}
+    # - name: Set .env file
+    #   if: github.ref == ${{ env.BRANCH_NAME }}
+    #   uses: 1arp/create-a-file-action@0.4.5
+    #   with:
+    #     file: ${{ env.SRC_DIRECTORY }}${{ env.ENV_PATH }}
+    #     content: ${{ env.ENV_SECRET }}
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
