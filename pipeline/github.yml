@@ -9,9 +9,9 @@ permissions:
   packages: write
 
 env:
-  APP_NAME: ${{ vars.PRODUCT_NAME }}
+  APP_NAME: ${{ vars.DEPLOY_DIR }}
   IMAGE_NAME: "ghcr.io/${{ secrets.GIT_DOCKER_USER }}/${{ vars.PRODUCT_NAME_LOWER }}"
-  SRC_DIRECTORY: "./${{ vars.DEPLOY_PATH }}/"
+  SRC_DIRECTORY: "./${{ vars.SRC_DIRECTORY }}" # Should be line project/ or nothing
   BRANCH_NAME: 'refs/heads/main'
   # ENV_PATH: '.env'
   # ENV_SECRET: ${{ secrets.PRODUCTION_ENV }}
