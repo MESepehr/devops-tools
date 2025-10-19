@@ -1,0 +1,17 @@
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql_server
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=$SA_PASS
+    volumes:
+      - ./mssql_data:/var/opt/mssql
+    restart: unless-stopped
+    env_file:
+      - .env
+volumes:
+  mssql_data:
+    driver: local
