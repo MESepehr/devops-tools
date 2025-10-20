@@ -10,3 +10,5 @@ services:
 #    volumes:
 #      - ./public:/app/public
 #      - ./.next:/app/.next
+#      - ./Images:/app/wwwroot/Images
+#      - ./appsettings.json:/app/appsettings.json 
