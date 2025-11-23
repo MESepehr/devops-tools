@@ -9,9 +9,9 @@ permissions:
   packages: write
 
 env:
-  APP_NAME: ${{ vars.DEPLOY_DIR }}
+  APP_NAME: ${{ vars.APP_NAME }}
   IMAGE_NAME: "ghcr.io/${{ secrets.GIT_DOCKER_USER }}/${{ vars.PRODUCT_NAME_LOWER }}"
-  SRC_DIRECTORY: "./${{ vars.SRC_DIRECTORY }}" # Should be line project/ or nothing
+  SRC_DIRECTORY: "./${{ vars.SRC_DIRECTORY }}" # Should be line project/ or nothing ./.
   BRANCH_NAME: 'refs/heads/main'
   ENV_PATH: '.env'
   ENV_SECRET: ${{ secrets.PRODUCTION_ENV }}
@@ -58,7 +58,7 @@ jobs:
       uses: actions/checkout@v3
     - name: update my docker file
       run: |
-        sed -i '/image:.*$/ s|image:.*|image: ${{ env.IMAGE_NAME }}|' docker-compose.yml
+        sed -i '/image:.*$/ s|image:.*|image: ${{ env.IMAGE_NAME }}|' ${{ env.SRC_DIRECTORY }}/docker-compose.yml
 
 
     # - name: Set .env file
@@ -77,7 +77,7 @@ jobs:
         REMOTE_USER: ${{ env.SERVER_USER }}
         REMOTE_PORT: ${{ env.SERVER_PORT }}
         # SCRIPT_BEFORE: mkdir -p ${{ env.APP_NAME }}
-        SOURCE: ./docker-compose.yml
+        SOURCE: ${{ vars.SRC_DIRECTORY }}/docker-compose.yml
         TARGET: "./${{ env.APP_NAME }}/."
         SCRIPT_AFTER_REQUIRED: true
         SCRIPT_AFTER: |
