@@ -1,0 +1,71 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  APP_NAME: AngryBirds
+  SERVER_DIRECTORY: "./AngryBirds"
+  SRC_DIRECTORY: "./${{ vars.SRC_DIRECTORY }}" # Should be line project/ or nothing ./.
+  BRANCH_NAME: 'refs/heads/main'
+  ENV_PATH: '.env'
+  ENV_SECRET: ${{ secrets.PRODUCTION_ENV }}
+  SERVER_KEY: ${{ secrets.SERVER_KEY }}
+  SERVER_IP: ${{ secrets.SERVER_IP }}
+  SERVER_USER: ${{ secrets.SERVER_USER }}
+  SERVER_PORT: ${{ secrets.SERVER_PORT }}
+  NODE_VERSION: 20
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:
+      CI: ""
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set .env file
+      uses: 1arp/create-a-file-action@0.4.5
+      with:
+        file: ${{ env.SRC_DIRECTORY }}/${{ env.ENV_PATH }}
+        content: ${{ env.ENV_SECRET }}
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Build react app
+      run: |
+        cd ${{ env.SRC_DIRECTORY }}
+        npm i --force
+        npm run build
+
+    - name: zip build folder
+      run: |
+        cd ${{ env.SRC_DIRECTORY }}
+        apt install zip
+        cd build
+        zip build.zip -r *
+        mv build.zip ../.
+
+    - name: ssh and download build
+      uses: easingthemes/ssh-deploy@v5.1.0
+      with:
+        SSH_PRIVATE_KEY: ${{ env.SERVER_KEY }}
+        REMOTE_HOST: ${{ env.SERVER_IP }}
+        REMOTE_USER: ${{ env.SERVER_USER }}
+        REMOTE_PORT: ${{ env.SERVER_PORT }}
+        SCRIPT_BEFORE: mkdir -p ${{ env.SERVER_DIRECTORY }}
+        SOURCE: ${{ vars.SRC_DIRECTORY }}/build.zip ./env
+        TARGET: "./${{ env.SERVER_DIRECTORY }}/."
+        SCRIPT_AFTER_REQUIRED: true
+        SCRIPT_AFTER: |
+            ls
+            unzip build.zip -d .
+
