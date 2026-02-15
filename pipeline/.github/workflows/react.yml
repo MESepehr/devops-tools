@@ -49,8 +49,9 @@ jobs:
     - name: zip build folder
       run: |
         cd ${{ env.SRC_DIRECTORY }}
-        apt install zip
-        cd build
+        # sudo apt-get update
+        sudo apt-get install -y zip
+        cd dist
         zip build.zip -r *
         mv build.zip ../.
 
@@ -62,10 +63,10 @@ jobs:
         REMOTE_USER: ${{ env.SERVER_USER }}
         REMOTE_PORT: ${{ env.SERVER_PORT }}
         SCRIPT_BEFORE: mkdir -p ${{ env.SERVER_DIRECTORY }}
-        SOURCE: ${{ vars.SRC_DIRECTORY }}/build.zip ./env
+        SOURCE: ${{ vars.SRC_DIRECTORY }}/build.zip ${{ vars.SRC_DIRECTORY }}/.env
         TARGET: "./${{ env.SERVER_DIRECTORY }}/."
         SCRIPT_AFTER_REQUIRED: true
         SCRIPT_AFTER: |
-            ls
+            cd ${{ env.SERVER_DIRECTORY }}
             unzip build.zip -d .
 
