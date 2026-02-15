@@ -9,9 +9,9 @@ permissions:
   packages: write
 
 env:
-  APP_NAME: AngryBirds
-  SERVER_DIRECTORY: "./AngryBirds"
-  SRC_DIRECTORY: "./${{ vars.SRC_DIRECTORY }}" # Should be line project/ or nothing ./.
+  APP_NAME: vakilemon_react
+  SERVER_DIRECTORY: "./vakilemon_react"
+  SRC_DIRECTORY: "./."
   BRANCH_NAME: 'refs/heads/main'
   ENV_PATH: '.env'
   ENV_SECRET: ${{ secrets.PRODUCTION_ENV }}
@@ -68,4 +68,5 @@ jobs:
         SCRIPT_AFTER_REQUIRED: true
         SCRIPT_AFTER: |
             cd ${{ env.SERVER_DIRECTORY }}
-            unzip -uq build.zip -d .
+            unzip -oq build.zip -d .
+            rm build.zip
