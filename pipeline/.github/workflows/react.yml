@@ -68,5 +68,4 @@ jobs:
         SCRIPT_AFTER_REQUIRED: true
         SCRIPT_AFTER: |
             cd ${{ env.SERVER_DIRECTORY }}
-            unzip build.zip -d .
-
+            unzip -uq build.zip -d .
