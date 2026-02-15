@@ -9,9 +9,10 @@ permissions:
   packages: write
 
 env:
-  APP_NAME: ${{ vars.APP_NAME }}
-  IMAGE_NAME: "ghcr.io/${{ secrets.GIT_DOCKER_USER }}/${{ vars.PRODUCT_NAME_LOWER }}"
-  SRC_DIRECTORY: "./${{ vars.SRC_DIRECTORY }}" # Should be line project/ or nothing ./.
+  APP_NAME: "your_app_name"
+  SERVER_DIRECTORY: "server_directory_on_home"
+  IMAGE_NAME: "ghcr.io/${{ secrets.GIT_DOCKER_USER }}/your_app_name_lowercase"
+  SRC_DIRECTORY: "./." # Should be line project/ or nothing ./.
   BRANCH_NAME: 'refs/heads/main'
   ENV_PATH: '.env'
   ENV_SECRET: ${{ secrets.PRODUCTION_ENV }}
@@ -21,6 +22,8 @@ env:
   SERVER_IP: ${{ secrets.SERVER_IP }}
   SERVER_USER: ${{ secrets.SERVER_USER }}
   SERVER_PORT: ${{ secrets.SERVER_PORT }}
+
+  lOCAL_PORT: ${{ vars.lOCAL_PORT }}
 
 jobs:
   build-and-push:
@@ -37,7 +40,6 @@ jobs:
         password: ${{ env.GIT_TOKEN }}
 
     - name: Set .env file
-      if: github.ref == ${{ env.BRANCH_NAME }}
       uses: 1arp/create-a-file-action@0.4.5
       with:
         file: ${{ env.SRC_DIRECTORY }}/${{ env.ENV_PATH }}
@@ -60,13 +62,16 @@ jobs:
       run: |
         sed -i '/image:.*$/ s|image:.*|image: ${{ env.IMAGE_NAME }}|' ${{ env.SRC_DIRECTORY }}/docker-compose.yml
 
+    - name: add Expose port to docker-compose
+      run: |
+        sed -i "s/\$EXPOSE_PORT/${{ env.lOCAL_PORT }}/g" docker-compose.yml
 
-    # - name: Set .env file
-    #   if: github.ref == ${{ env.BRANCH_NAME }}
-    #   uses: 1arp/create-a-file-action@0.4.5
-    #   with:
-    #     file: ${{ env.SRC_DIRECTORY }}${{ env.ENV_PATH }}
-    #     content: ${{ env.ENV_SECRET }}
+    - name: Set .env file
+      uses: 1arp/create-a-file-action@0.4.5
+      with:
+        file: ${{ env.SRC_DIRECTORY }}/${{ env.ENV_PATH }}
+        content: ${{ env.ENV_SECRET }}
+
 
 
     - name: ssh pull image and deploy
@@ -76,13 +81,13 @@ jobs:
         REMOTE_HOST: ${{ env.SERVER_IP }}
         REMOTE_USER: ${{ env.SERVER_USER }}
         REMOTE_PORT: ${{ env.SERVER_PORT }}
-        # SCRIPT_BEFORE: mkdir -p ${{ env.APP_NAME }}
-        SOURCE: ${{ vars.SRC_DIRECTORY }}/docker-compose.yml
-        TARGET: "./${{ env.APP_NAME }}/."
+        SCRIPT_BEFORE: mkdir -p ${{ env.SERVER_DIRECTORY }}
+        SOURCE: ${{ env.SRC_DIRECTORY }}/docker-compose.yml ${{ env.SRC_DIRECTORY }}/.env
+        TARGET: "./${{ env.SERVER_DIRECTORY }}/."
         SCRIPT_AFTER_REQUIRED: true
         SCRIPT_AFTER: |
             set -euo pipefail
-            cd ${{ env.APP_NAME }}
+            cd ${{ env.SERVER_DIRECTORY }}
             echo ${{ env.GIT_TOKEN }} | docker login ghcr.io -u ${{ env.GIT_USER }}  --password-stdin
             docker compose pull
             docker compose down
