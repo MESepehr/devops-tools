@@ -23,7 +23,7 @@ env:
   SERVER_USER: ${{ secrets.SERVER_USER }}
   SERVER_PORT: ${{ secrets.SERVER_PORT }}
 
-  lOCAL_PORT: ${{ vars.lOCAL_PORT }}
+  lOCAL_PORT: ${{ secrets.lOCAL_PORT }}
 
 jobs:
   build-and-push:
@@ -63,6 +63,7 @@ jobs:
         sed -i '/image:.*$/ s|image:.*|image: ${{ env.IMAGE_NAME }}|' ${{ env.SRC_DIRECTORY }}/docker-compose.yml
 
     - name: add Expose port to docker-compose
+      if: ${{ env.LOCAL_PORT != '' }}
       run: |
         sed -i "s/\$EXPOSE_PORT/${{ env.lOCAL_PORT }}/g" docker-compose.yml
 
