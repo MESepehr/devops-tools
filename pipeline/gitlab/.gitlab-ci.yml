@@ -1,0 +1,59 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  BUILD_DIR: dist
+  SERVER_USER: $SERVER_USER
+  SERVER_IP: $SERVER_IP
+  SERVER_PATH: $SERVER_PATH
+  SSH_PRIVATE_KEY: $SSH_PRIVATE_KEY
+
+build_react_app:
+  image: node:20
+  stage: build
+  script:
+    - echo "Switch to Iran mirror for npm"
+    - npm config set registry https://mirror-npm.runflare.com
+    - echo "Installing project dependencies..."
+    - npm install
+    - echo "Building the React application..."
+    - npm run build
+    - echo "Build artifacts are ready in the '${BUILD_DIR}' directory."
+  artifacts:
+    paths:
+      - ${BUILD_DIR}
+    expire_in: 1 hour
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - node_modules/
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+deploy_app:
+  stage: deploy
+  before_script:
+    #Switch to Iran mirrors
+    - sed -i 's/archive.ubuntu.com/mirror.arvancloud.ir/g' /etc/apt/sources.list
+    - apt-get update -qq && apt-get install -y -qq rsync openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - echo "Deploying build artifacts to server..."
+    - rsync -avz --delete ${BUILD_DIR}/ ${SERVER_USER}@${SERVER_IP}:${SERVER_PATH}
+    - echo "Deployment complete!"
+  # environment:
+  #   name: production
+  #   url: http://${SERVER_IP}
+  when: on_success
+  needs:
+    - build_react_app
+
+
