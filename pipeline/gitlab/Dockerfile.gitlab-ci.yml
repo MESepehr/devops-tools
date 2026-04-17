@@ -1,0 +1,58 @@
+stages:
+  - build
+  # - deploy
+
+variables:
+  IMAGE_NAME: vakilemon-landing-image
+  IMAGE_TAG: latest
+  IMAGE_FILE: vakilemon-landing.tar
+  SERVER_USER: $SERVER_USER
+  SERVER_IP: $SERVER_IP
+  SERVER_PATH: $SERVER_PATH
+  SSH_PRIVATE_KEY: $SSH_PRIVATE_KEY
+
+###########################
+#       BUILD Docker
+###########################
+build_docker_image:
+  tags:
+    - shell
+  stage: build
+  script:
+    - echo "Force Dockerfile to user runflare mirror"
+    - sed -i 's|^RUN npm install|RUN npm install --registry="https://mirror-npm.runflare.com"|' Dockerfile
+    - echo "Building Docker image..."
+    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+    - echo "Saving Docker image to file $IMAGE_FILE"
+    - docker save $IMAGE_NAME:$IMAGE_TAG -o $IMAGE_FILE
+    - pwd
+  # artifacts:
+  #   paths:
+  #     - $IMAGE_FILE
+  #   expire_in: 2 hours
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ##########################
+#        DEPLOY
+# ##########################
+# deploy_image_file:
+#   stage: deploy
+#   before_script:
+#     - sed -i 's/archive.ubuntu.com/mirror.arvancloud.ir/g' /etc/apt/sources.list
+#     - apt-get update -qq && apt-get install -y -qq rsync openssh-client
+#     - eval $(ssh-agent -s)
+#     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+#     - mkdir -p ~/.ssh
+#     - chmod 700 ~/.ssh
+#     - ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
+#     - chmod 644 ~/.ssh/known_hosts
+#   script:
+#     - echo "Copying Docker image file to server..."
+#     - rsync -avz $IMAGE_FILE ${SERVER_USER}@${SERVER_IP}:${SERVER_PATH}/
+#     - echo "Image copied!"
+#     - echo "To load image on server, run:"
+#     - echo "docker load -i ${SERVER_PATH}/${IMAGE_FILE}"
+#   needs:
+#     - build_docker_image
+#   when: on_success
