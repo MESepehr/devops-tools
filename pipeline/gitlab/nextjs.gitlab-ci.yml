@@ -1,0 +1,90 @@
+stages:
+    - build
+    # - deploy
+
+
+variables:
+  BUILD_DIR: build
+  SERVER_USER: $SERVER_USER_BETA
+  SERVER_IP: $SERVER_IP_BETA
+  SERVER_PATH: $SERVER_PATH_BETA
+  SSH_PRIVATE_KEY: $SSH_PRIVATE_KEY_BETA
+
+build:
+    image: node:20
+    stage: build
+    only:
+        - beta
+    before_script:
+        - echo "Switch to runflare repositories"
+        - sed -i 's/deb.debian.org/mirror-linux.runflare.com/g' /etc/apt/sources.list.d/debian.sources
+        - apt update -y && apt install -y openssh-client
+        - eval $(ssh-agent -s)
+        - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+        - mkdir -p ~/.ssh
+        - chmod 700 ~/.ssh
+        - echo "Host $SERVER_IP" >> ~/.ssh/config
+        - echo "    StrictHostKeyChecking no" >> ~/.ssh/config # Be cautious with this in production!
+        - chmod 644 ~/.ssh/config
+    script:
+        - echo "Switch to Iran mirror for npm"
+        - npm config set registry https://mirror-npm.runflare.com
+        - npm --silent i --force
+        - echo "Set .env file to project"
+        - cp .env.example .env
+        # - cp $ENV_FILE ./.env
+        - npm --silent run build
+        - mkdir export
+        - mv .env export/.
+        - mv .next export/.
+        - mv public export/.
+        - mv node_modules export/.
+        - echo "Sync data to server"
+        - apt install -y rsync
+        - rsync -az --delete ./export/* ${SERVER_USER}@${SERVER_IP}:${SERVER_PATH}
+        - rsync -az --delete ./export/.* ${SERVER_USER}@${SERVER_IP}:${SERVER_PATH}
+        - echo "Make node_modules back to cache folder"
+        - mv export/node_modules .
+    # artifacts:
+    #     paths:
+    #         - export
+    #     expire_in: 1 hour
+    cache:
+        key:
+            files:
+                - package-lock.json
+        paths:
+            - node_modules/
+
+
+# deploy-prod:
+#     stage: deploy
+#     image: ubuntu:20.04
+#     dependencies:
+#         - build
+#     only:
+#         - beta2
+#     before_script:
+#     #Switch to Iran mirrors
+#         - sed -i 's/archive.ubuntu.com/mirror.arvancloud.ir/g' /etc/apt/sources.list
+#         - apt-get update -qq && apt-get install -y -qq rsync openssh-client
+#         - eval $(ssh-agent -s)
+#         - echo "$SSH_PRIVATE_KEY_BETA"
+#         - echo "$SSH_PRIVATE_KEY_BETA" | tr -d '\r' | ssh-add -
+#         - mkdir -p ~/.ssh
+#         - chmod 700 ~/.ssh
+#         - ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
+#         - chmod 644 ~/.ssh/known_hosts
+#     script:
+#     - echo "Deploying to server"
+#     - mkdir export
+#     - echo hi > export/hi.txt
+#     - rsync -avz --delete ./export/* ${SERVER_USER}@${SERVER_IP}:${SERVER_PATH}
+#     # - sshpass -p "${PASSWORD}" ssh ssh://${USERNAME}@${SERVER_IP}:2532 "cd /var/www/sepehrino-landing/ && git pull origin main"
+#     # - sshpass -p "${PASSWORD}" ssh ssh://${USERNAME}@${SERVER_IP}:2532 "cd /var/www/sepehrino-landing/ && yarn"
+#     # - sshpass -p "${PASSWORD}" ssh ssh://${USERNAME}@${SERVER_IP}:2532 "cd /var/www/sepehrino-landing/ && npm run build"
+#     # - sshpass -p "${PASSWORD}" ssh ssh://${USERNAME}@${SERVER_IP}:2532 "supervisorctl restart sepehrino-landing:*"
+#     - echo "Deployed."
+#     retry:
+#         max: 1
+#         # when: always

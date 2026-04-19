@@ -30,8 +30,10 @@ build_react_app:
         - package-lock.json
     paths:
       - node_modules/
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+  only:
+      - beta
+  # rules:
+  #   - if: '$CI_COMMIT_BRANCH == "main"'
 
 deploy_app:
   stage: deploy
