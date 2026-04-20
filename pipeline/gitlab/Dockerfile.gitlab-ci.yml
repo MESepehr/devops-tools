@@ -1,15 +1,15 @@
 stages:
   - build
-  # - deploy
+  - deploy
 
 variables:
-  IMAGE_NAME: vakilemon-landing-image
-  IMAGE_TAG: latest
-  IMAGE_FILE: vakilemon-landing.tar
-  SERVER_USER: $SERVER_USER
-  SERVER_IP: $SERVER_IP
-  SERVER_PATH: $SERVER_PATH
-  SSH_PRIVATE_KEY: $SSH_PRIVATE_KEY
+  IMAGE_NAME_: $IMAGE_NAME
+  IMAGE_TAG_: latest
+  IMAGE_FILE_: $IMAGE_FILE
+  SERVER_USER_: $SERVER_USER
+  SERVER_IP_: $SERVER_IP
+  SERVER_PATH_: $SERVER_PATH
+  SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY
 
 ###########################
 #       BUILD Docker
@@ -18,41 +18,56 @@ build_docker_image:
   tags:
     - shell
   stage: build
+  only:
+      - main
   script:
-    - echo "Force Dockerfile to user runflare mirror"
+    - echo "Force Dockerfile to user runflare mirrors"
     - sed -i 's|^RUN npm install|RUN npm install --registry="https://mirror-npm.runflare.com"|' Dockerfile
-    - echo "Building Docker image..."
-    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
-    - echo "Saving Docker image to file $IMAGE_FILE"
-    - docker save $IMAGE_NAME:$IMAGE_TAG -o $IMAGE_FILE
-    - pwd
-  # artifacts:
-  #   paths:
-  #     - $IMAGE_FILE
-  #   expire_in: 2 hours
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - sed -i 's|^RUN pip install|RUN pip install -i https://mirror-pypi.runflare.com/simple|' Dockerfile
+    - echo "Building Docker image ${IMAGE_NAME_}:${IMAGE_TAG_}..."
+    - docker build -t $IMAGE_NAME_:$IMAGE_TAG_ .
+    - echo "Saving Docker image to file $IMAGE_FILE_"
+    - docker save $IMAGE_NAME_:$IMAGE_TAG_ -o $IMAGE_FILE_
+
+    ## Get ready to send image file to server
+    - 'mkdir -p ~/.ssh'
+    - 'echo "$SSH_PRIVATE_KEY_" > ~/.ssh/id_edtemp'
+    - 'chmod 600 ~/.ssh/id_edtemp'
+    - 'ssh-keyscan $SERVER_IP_ >> ~/.ssh/known_hosts'
+
+    - scp -o IdentityFile=~/.ssh/id_edtemp $IMAGE_FILE_ $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/.
+    - rm $IMAGE_FILE_
+#   artifacts:
+#     paths:
+#       - $IMAGE_FILE_
+#     expire_in: 2 hours
+#   rules:
+#     - if: '$CI_COMMIT_BRANCH == "main"'
 
 # ##########################
 #        DEPLOY
 # ##########################
-# deploy_image_file:
-#   stage: deploy
+deploy_image_file:
+  stage: deploy
+  tags:
+    - shell
 #   before_script:
-#     - sed -i 's/archive.ubuntu.com/mirror.arvancloud.ir/g' /etc/apt/sources.list
-#     - apt-get update -qq && apt-get install -y -qq rsync openssh-client
-#     - eval $(ssh-agent -s)
-#     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-#     - mkdir -p ~/.ssh
-#     - chmod 700 ~/.ssh
-#     - ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
-#     - chmod 644 ~/.ssh/known_hosts
-#   script:
-#     - echo "Copying Docker image file to server..."
-#     - rsync -avz $IMAGE_FILE ${SERVER_USER}@${SERVER_IP}:${SERVER_PATH}/
-#     - echo "Image copied!"
-#     - echo "To load image on server, run:"
-#     - echo "docker load -i ${SERVER_PATH}/${IMAGE_FILE}"
+    # - sed -i 's/archive.ubuntu.com/mirror.arvancloud.ir/g' /etc/apt/sources.list
+    # - apt-get update -qq && apt-get install -y -qq rsync openssh-client
+    # - eval $(ssh-agent -s)
+    # - echo "$SSH_PRIVATE_KEY_" | tr -d '\r' | ssh-add -
+    # - mkdir -p ~/.ssh
+    # - chmod 700 ~/.ssh
+    # - ssh-keyscan $SERVER_IP_ >> ~/.ssh/known_hosts
+    # - chmod 644 ~/.ssh/known_hosts
+  script:
+    - 'mkdir -p ~/.ssh'
+    - 'echo "$SSH_PRIVATE_KEY_" > ~/.ssh/id_edtemp'
+    - 'chmod 600 ~/.ssh/id_edtemp'
+    - 'ssh-keyscan $SERVER_IP_ >> ~/.ssh/known_hosts'
+    - scp -o IdentityFile=~/.ssh/id_edtemp hi.txt $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/.
 #   needs:
 #     - build_docker_image
-#   when: on_success
+  only:
+      - main2
+  when: on_success
