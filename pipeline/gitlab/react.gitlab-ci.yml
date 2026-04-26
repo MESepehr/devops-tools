@@ -3,11 +3,11 @@ stages:
   - deploy
 
 variables:
-  BUILD_DIR: dist
-  SERVER_USER: $SERVER_USER
-  SERVER_IP: $SERVER_IP
-  SERVER_PATH: $SERVER_PATH
-  SSH_PRIVATE_KEY: $SSH_PRIVATE_KEY
+  BUILD_DIR_: dist
+  SERVER_USER_: $SERVER_USER
+  SERVER_IP_: $SERVER_IP
+  SERVER_PATH_: $SERVER_PATH
+  SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY
 
 build_react_app:
   image: node:20
@@ -16,22 +16,24 @@ build_react_app:
     - echo "Switch to Iran mirror for npm"
     - npm config set registry https://mirror-npm.runflare.com
     - echo "Installing project dependencies..."
+    - rm ./package-lock.json
     - npm install
     - echo "Building the React application..."
+    - cp "$ENV_FILE" .env
     - npm run build
-    - echo "Build artifacts are ready in the '${BUILD_DIR}' directory."
+    - echo "Build artifacts are ready in the '${BUILD_DIR_}' directory."
   artifacts:
     paths:
-      - ${BUILD_DIR}
+      - ${BUILD_DIR_}
     expire_in: 1 hour
   cache:
     key:
       files:
-        - package-lock.json
+        - package.json
     paths:
       - node_modules/
   only:
-      - beta
+      - main
   # rules:
   #   - if: '$CI_COMMIT_BRANCH == "main"'
 
@@ -42,14 +44,14 @@ deploy_app:
     - sed -i 's/archive.ubuntu.com/mirror.arvancloud.ir/g' /etc/apt/sources.list
     - apt-get update -qq && apt-get install -y -qq rsync openssh-client
     - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - echo "$SSH_PRIVATE_KEY_" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
+    - ssh-keyscan $SERVER_IP_ >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
   script:
     - echo "Deploying build artifacts to server..."
-    - rsync -avz --delete ${BUILD_DIR}/ ${SERVER_USER}@${SERVER_IP}:${SERVER_PATH}
+    - rsync -avz --delete ${BUILD_DIR_}/ ${SERVER_USER_}@${SERVER_IP_}:${SERVER_PATH_}
     - echo "Deployment complete!"
   # environment:
   #   name: production
@@ -57,5 +59,3 @@ deploy_app:
   when: on_success
   needs:
     - build_react_app
-
-

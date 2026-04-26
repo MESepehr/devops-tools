@@ -18,7 +18,7 @@ variables:
 ###########################
 #       BUILD Docker
 ###########################
-build_docker_image:
+build_on_server:
   tags:
     - shell
   stage: build
