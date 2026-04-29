@@ -4,7 +4,6 @@ stages:
 variables:
   IMAGE_NAME_: $IMAGE_NAME
   IMAGE_TAG_: latest
-  IMAGE_FILE_: $IMAGE_FILE
   SERVER_USER_: $SERVER_USER
   SERVER_IP_: $SERVER_IP
   SERVER_PATH_: $SERVER_PATH
@@ -24,14 +23,14 @@ build_docker_image:
       - main
   script:
     - echo "Force Dockerfile to user runflare mirrors"
-    - sed -i 's|RUN npm install|RUN npm install --registry="https://mirror-npm.runflare.com"|' Dockerfile
+    # - sed -i 's|RUN npm install|RUN npm install --registry="https://mirror-npm.runflare.com"|' Dockerfile
     - sed -i 's|RUN pip install|RUN pip install -i https://mirror-pypi.runflare.com/simple|' Dockerfile
     - echo "Copy .env file"
     - cp $ENV_FILE_ .env
     - echo "Building Docker image ${IMAGE_NAME_}:${IMAGE_TAG_}..."
     - docker build -t $IMAGE_NAME_:$IMAGE_TAG_ .
-    - echo "Saving Docker image to file $IMAGE_FILE_"
-    - docker save $IMAGE_NAME_:$IMAGE_TAG_ -o $IMAGE_FILE_
+    - echo "Saving Docker image to file $IMAGE_NAME_.tar"
+    - docker save $IMAGE_NAME_:$IMAGE_TAG_ -o $IMAGE_NAME_.tar
 
     ## Get ready to send image file to server
     - 'mkdir -p ~/.ssh'
@@ -39,8 +38,8 @@ build_docker_image:
     - 'chmod 600 ~/.ssh/id_edtemp'
     - 'ssh-keyscan $SERVER_IP_ >> ~/.ssh/known_hosts'
 
-    - scp -o IdentityFile=~/.ssh/id_edtemp $IMAGE_FILE_ $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/.
-    - rm $IMAGE_FILE_
+    - scp -o IdentityFile=~/.ssh/id_edtemp $IMAGE_NAME_.tar $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/.
+    - rm $IMAGE_NAME_.tar
 
     ## Make docker-compose ready and export to servre
     - echo "Make docker-compose ready and export to servre"
@@ -48,6 +47,7 @@ build_docker_image:
     - sed -i "s|\$EXPOSE_PORT|${lOCAL_PORT_}|g" $SRC_DIRECTORY_/docker-compose.yml
 
     - scp -o IdentityFile=~/.ssh/id_edtemp $SRC_DIRECTORY_/docker-compose.yml $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/.
+    - scp -o IdentityFile=~/.ssh/id_edtemp $SRC_DIRECTORY_/.env $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/.
 
     ## Restart the docker compose file
     - |
@@ -56,14 +56,14 @@ build_docker_image:
           $SERVER_USER_@$SERVER_IP_ << EOF
             echo "Move to ${SERVER_PATH_}"
             cd ${SERVER_PATH_}
-            echo "Load image ${IMAGE_FILE_}"
-            docker load -i ./${IMAGE_FILE_}
+            echo "Load image ${IMAGE_NAME_}.tar"
+            docker load -i ./${IMAGE_NAME_}.tar
             docker compose down
             docker compose up -d
       EOF
 #   artifacts:
 #     paths:
-#       - $IMAGE_FILE_
+#       - $IMAGE_NAME_.tar
 #     expire_in: 2 hours
 #   rules:
 #     - if: '$CI_COMMIT_BRANCH == "main"'
