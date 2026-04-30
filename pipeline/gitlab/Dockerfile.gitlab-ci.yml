@@ -6,9 +6,9 @@ variables:
   IMAGE_TAG_: latest
   SERVER_USER_: $SERVER_USER
   SERVER_IP_: $SERVER_IP
-  SERVER_PATH_: $SERVER_PATH
   SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY
   SRC_DIRECTORY_: '.'
+  SERVER_PATH_: $SERVER_PATH
   lOCAL_PORT_: $lOCAL_PORT
   ENV_FILE_: $ENV_FILE
 
@@ -20,10 +20,10 @@ build_docker_image:
     - shell
   stage: build
   only:
-      - main
+      - master
   script:
     - echo "Force Dockerfile to user runflare mirrors"
-    # - sed -i 's|RUN npm install|RUN npm install --registry="https://mirror-npm.runflare.com"|' Dockerfile
+    - sed -i 's|RUN npm install|RUN npm install --registry="https://package-mirror.liara.ir/repository/npm/"|' Dockerfile
     - sed -i 's|RUN pip install|RUN pip install -i https://mirror-pypi.runflare.com/simple|' Dockerfile
     - echo "Copy .env file"
     - cp $ENV_FILE_ .env
