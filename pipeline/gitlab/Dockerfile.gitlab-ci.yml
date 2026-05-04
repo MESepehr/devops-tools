@@ -20,13 +20,28 @@ build_docker_image:
     - shell
   stage: build
   only:
-      - master
+      - main
   script:
     - echo "Force Dockerfile to user runflare mirrors"
-    - sed -i 's|RUN npm install|RUN npm install --registry="https://package-mirror.liara.ir/repository/npm/"|' Dockerfile
-    - sed -i 's|RUN pip install|RUN pip install -i https://mirror-pypi.runflare.com/simple|' Dockerfile
+    # - sed -i 's|RUN npm install|RUN npm install --registry="https://package-mirror.liara.ir/repository/npm/"|' Dockerfile
+    # - sed -i 's|RUN pip install|RUN pip install -i https://mirror-pypi.runflare.com/simple|' Dockerfile
     - echo "Copy .env file"
     - cp $ENV_FILE_ .env
+
+    ## Microsoft bypass part...
+    # - echo "Only for microsoft images..."
+    # - |
+    #   if ! docker image inspect "mcr.microsoft.com/dotnet/sdk:9.0" > /dev/null 2>&1; then
+    #     wget https://codekit.s3.ir-thr-at1.arvanstorage.ir/dotnetsdk9.0.tar -O dotnetsdk9.0.tar
+    #     docker load -i dotnetsdk9.0.tar
+    #   fi
+    # - |
+    #   if ! docker image inspect "mcr.microsoft.com/dotnet/aspnet:9.0" > /dev/null 2>&1; then
+    #     wget https://codekit.s3.ir-thr-at1.arvanstorage.ir/dotnetaspnet9.0.tar -O dotnetaspnet9.0.tar
+    #     docker load -i dotnetaspnet9.0.tar
+    #   fi
+    ## Microsoft bypass done
+
     - echo "Building Docker image ${IMAGE_NAME_}:${IMAGE_TAG_}..."
     - docker build -t $IMAGE_NAME_:$IMAGE_TAG_ .
     - echo "Saving Docker image to file $IMAGE_NAME_.tar"
