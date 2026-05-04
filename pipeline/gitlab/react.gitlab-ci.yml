@@ -8,18 +8,19 @@ variables:
   SERVER_IP_: $SERVER_IP
   SERVER_PATH_: $SERVER_PATH
   SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY
+  ENV_FILE_: $ENV_FILE
 
 build_react_app:
   image: node:20
   stage: build
   script:
     - echo "Switch to Iran mirror for npm"
-    - npm config set registry https://mirror-npm.runflare.com
+    # - npm config set registry https://mirror-npm.runflare.com
     - echo "Installing project dependencies..."
     - rm ./package-lock.json
-    - npm install
+    - npm install --legacy-peer-deps
     - echo "Building the React application..."
-    - cp "$ENV_FILE" .env
+    - cp "$ENV_FILE_" .env
     - npm run build
     - echo "Build artifacts are ready in the '${BUILD_DIR_}' directory."
   artifacts:
