@@ -1,16 +1,17 @@
 stages:
   - build
+  - deploy
 
 variables:
-  IMAGE_NAME_: $IMAGE_NAME
+  IMAGE_NAME_: $CI_REGISTRY_IMAGE
   IMAGE_TAG_: latest
-  SERVER_USER_: $SERVER_USER
-  SERVER_IP_: $SERVER_IP
-  SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY
+  SERVER_USER_: $SERVER_USER_BETA
+  SERVER_IP_: $SERVER_IP_BETA
+  SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY_BETA
   SRC_DIRECTORY_: '.'
-  SERVER_PATH_: $SERVER_PATH
-  lOCAL_PORT_: $lOCAL_PORT
-  ENV_FILE_: $ENV_FILE
+  SERVER_PATH_: $SERVER_PATH_BETA
+  lOCAL_PORT_: $lOCAL_PORT_BETA
+  ENV_FILE_: $ENV_FILE_BETA
 
 ###########################
 #       BUILD Docker
@@ -20,9 +21,9 @@ build_docker_image:
     - shell
   stage: build
   only:
-      - main
+      - beta
   script:
-    - echo "Force Dockerfile to user runflare mirrors"
+    # - echo "Force Dockerfile to user runflare mirrors"
     # - sed -i 's|RUN npm install|RUN npm install --registry="https://package-mirror.liara.ir/repository/npm/"|' Dockerfile
     # - sed -i 's|RUN pip install|RUN pip install -i https://mirror-pypi.runflare.com/simple|' Dockerfile
     - echo "Copy .env file"
@@ -42,10 +43,33 @@ build_docker_image:
     #   fi
     ## Microsoft bypass done
 
-    - echo "Building Docker image ${IMAGE_NAME_}:${IMAGE_TAG_}..."
-    - docker build -t $IMAGE_NAME_:$IMAGE_TAG_ .
-    - echo "Saving Docker image to file $IMAGE_NAME_.tar"
-    - docker save $IMAGE_NAME_:$IMAGE_TAG_ -o $IMAGE_NAME_.tar
+    - echo "Building Docker image $CI_REGISTRY_IMAGE:$IMAGE_TAG_..."
+    - docker build -t $CI_REGISTRY_IMAGE:$IMAGE_TAG_ .
+
+
+    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+    - docker push $CI_REGISTRY_IMAGE:$IMAGE_TAG_
+
+    ## 2. Image file sharing mode
+    # - echo "Saving Docker image to file $CI_PROJECT_NAME.tar"
+    # - docker save $CI_REGISTRY_IMAGE:$IMAGE_TAG_ -o $IMAGE_NAME_.tar
+
+    # - scp -o IdentityFile=~/.ssh/id_edtemp $IMAGE_NAME_.tar $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/.
+
+
+deploy_docker_image:
+  tags:
+    - shell
+  stage: deploy
+  only:
+      - beta
+  needs:
+    - build_docker_image
+  script:
+    
+    - echo "Copy .env file"
+    - cp $ENV_FILE_ .env
+
 
     ## Get ready to send image file to server
     - 'mkdir -p ~/.ssh'
@@ -53,32 +77,39 @@ build_docker_image:
     - 'chmod 600 ~/.ssh/id_edtemp'
     - 'ssh-keyscan $SERVER_IP_ >> ~/.ssh/known_hosts'
 
-    - scp -o IdentityFile=~/.ssh/id_edtemp $IMAGE_NAME_.tar $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/.
-    - rm $IMAGE_NAME_.tar
-
     ## Make docker-compose ready and export to servre
     - echo "Make docker-compose ready and export to servre"
-    - sed -i "s|image:.*|image:\ ${IMAGE_NAME_}|" $SRC_DIRECTORY_/docker-compose.yml
+    - sed -i "s|image:.*|image:\ ${IMAGE_NAME_:IMAGE_TAG_}|" $SRC_DIRECTORY_/docker-compose.yml
     - sed -i "s|\$EXPOSE_PORT|${lOCAL_PORT_}|g" $SRC_DIRECTORY_/docker-compose.yml
 
     - scp -o IdentityFile=~/.ssh/id_edtemp $SRC_DIRECTORY_/docker-compose.yml $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/.
     - scp -o IdentityFile=~/.ssh/id_edtemp $SRC_DIRECTORY_/.env $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/.
 
-    ## Restart the docker compose file
+    ## 1. Now push the Image to self registry
     - |
       ssh -o StrictHostKeyChecking=no \
           -o IdentityFile=~/.ssh/id_edtemp \
           $SERVER_USER_@$SERVER_IP_ << EOF
             echo "Move to ${SERVER_PATH_}"
             cd ${SERVER_PATH_}
-            echo "Load image ${IMAGE_NAME_}.tar"
-            docker load -i ./${IMAGE_NAME_}.tar
+            echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+            docker compose pull
             docker compose down
             docker compose up -d
       EOF
-#   artifacts:
-#     paths:
-#       - $IMAGE_NAME_.tar
-#     expire_in: 2 hours
-#   rules:
-#     - if: '$CI_COMMIT_BRANCH == "main"'
+
+    ## 2. Image file sharing mode
+    # - scp -o IdentityFile=~/.ssh/id_edtemp $IMAGE_NAME_.tar $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/.
+    # - rm $IMAGE_NAME_.tar
+
+    # - |
+    #   ssh -o StrictHostKeyChecking=no \
+    #       -o IdentityFile=~/.ssh/id_edtemp \
+    #       $SERVER_USER_@$SERVER_IP_ << EOF
+    #         echo "Move to ${SERVER_PATH_}"
+    #         cd ${SERVER_PATH_}
+    #         echo "Load image ${IMAGE_NAME_}.tar"
+    #         docker load -i ./${IMAGE_NAME_}.tar
+    #         docker compose down
+    #         docker compose up -d
+    #   EOF

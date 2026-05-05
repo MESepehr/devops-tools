@@ -28,3 +28,16 @@ shutdown_timeout = 0
     pull_policy = ["if-not-present"]
     shm_size = 0
     network_mtu = 0
+
+
+[[runners]]
+  name = "codekitgit_shell"
+  url = "https://git.ngtartanak.co.ir"
+  id = 8
+  token = "glrt-uM9Lu6TEfW9zltzsO_a8wm86MQp0OjEKdTo2Cw.01.121vrx2xf"
+  token_obtained_at = 2026-04-16T12:00:52Z
+  token_expires_at = 0001-01-01T00:00:00Z
+  executor = "shell"
+  [runners.cache]
+    MaxUploadedArchiveSize = 0
+#    Path = "/home/gitlab-runner/cache_for_shell"
