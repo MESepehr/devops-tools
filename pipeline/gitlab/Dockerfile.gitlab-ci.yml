@@ -80,7 +80,7 @@ deploy_docker_image:
 
     ## Make docker-compose ready and export to servre
     - echo "Make docker-compose ready and export to servre"
-    - sed -i "s|image:.*|image:\ ${IMAGE_NAME_:IMAGE_TAG_}|" $SRC_DIRECTORY_/docker-compose.yml
+    - sed -i "s|image:.*|image:\ ${IMAGE_NAME_}:${IMAGE_TAG_}|" $SRC_DIRECTORY_/docker-compose.yml
     - sed -i "s|\$EXPOSE_PORT|${lOCAL_PORT_}|g" $SRC_DIRECTORY_/docker-compose.yml
 
     - scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp $SRC_DIRECTORY_/docker-compose.yml $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/.
