@@ -7,7 +7,9 @@ services:
       - "$EXPOSE_PORT:8000"
     env_file:
       - .env
-#    volumes:
+    volumes:
+#      - ./public:/app/storage/app/public
+#      - ./logs:/app/storage/logs
 #      - ./public:/app/public
 #      - ./.next:/app/.next
 #      - ./Images:/app/wwwroot/Images
