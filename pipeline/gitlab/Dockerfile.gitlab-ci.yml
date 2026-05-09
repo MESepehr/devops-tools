@@ -2,90 +2,130 @@ stages:
   - build
   - deploy
 
+##Global variables
 variables:
   IMAGE_NAME_: $CI_REGISTRY_IMAGE
-  IMAGE_TAG_: latest
-  SERVER_USER_: $SERVER_USER_BETA
-  SERVER_IP_: $SERVER_IP_BETA
-  SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY_BETA
-  SSH_PORT_: $SSH_PORT
-  SRC_DIRECTORY_: '.'
-  SERVER_PATH_: $SERVER_PATH_BETA
-  lOCAL_PORT_: $lOCAL_PORT_BETA
-  ENV_FILE_: $ENV_FILE_BETA
+  SRC_DIRECTORY_: './Eshop'
 
-###########################
-#       BUILD Docker
-###########################
-build_docker_image:
+## Build image part
+.build_docker_image:
+  variables:
+    IMAGE_TAG_: toorball_eshop
+    DOCKERFILE_NAME_: DockerfileEshop
+    IMAGE_NAME_PATTERN:
+    EXPOSE_PORT_PATTERN:
+    EXPOSE_PORT:
+    TARGET_IMAGE_TAG:
+    BRANCH:
+    ENV_FILE_:
   tags:
     - shell
   stage: build
-  only:
-      - beta
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $BRANCH || $BRANCH == ""'
   script:
+    - cd $SRC_DIRECTORY_
     # - echo "Force Dockerfile to user runflare mirrors"
     # - sed -i 's|RUN npm install|RUN npm install --registry="https://package-mirror.liara.ir/repository/npm/"|' Dockerfile
     # - sed -i 's|RUN pip install|RUN pip install -i https://mirror-pypi.runflare.com/simple|' Dockerfile
     - echo "Copy .env file"
     - cp $ENV_FILE_ .env
 
-    ## Microsoft bypass part...
-    # - echo "Only for microsoft images..."
-    # - |
-    #   if ! docker image inspect "mcr.microsoft.com/dotnet/sdk:9.0" > /dev/null 2>&1; then
-    #     wget https://codekit.s3.ir-thr-at1.arvanstorage.ir/dotnetsdk9.0.tar -O dotnetsdk9.0.tar
-    #     docker load -i dotnetsdk9.0.tar
-    #   fi
-    # - |
-    #   if ! docker image inspect "mcr.microsoft.com/dotnet/aspnet:9.0" > /dev/null 2>&1; then
-    #     wget https://codekit.s3.ir-thr-at1.arvanstorage.ir/dotnetaspnet9.0.tar -O dotnetaspnet9.0.tar
-    #     docker load -i dotnetaspnet9.0.tar
-    #   fi
-    ## Microsoft bypass done
+    # Microsoft bypass part...
+    - echo "Only for microsoft images..."
+    - |
+      if ! docker image inspect "mcr.microsoft.com/dotnet/sdk:9.0" > /dev/null 2>&1; then
+        wget https://codekit.s3.ir-thr-at1.arvanstorage.ir/dotnetsdk9.0.tar -O dotnetsdk9.0.tar
+        docker load -i dotnetsdk9.0.tar
+      fi
+    - |
+      if ! docker image inspect "mcr.microsoft.com/dotnet/aspnet:9.0" > /dev/null 2>&1; then
+        wget https://codekit.s3.ir-thr-at1.arvanstorage.ir/dotnetaspnet9.0.tar -O dotnetaspnet9.0.tar
+        docker load -i dotnetaspnet9.0.tar
+      fi
+    # Microsoft bypass done
 
-    - echo "Building Docker image $CI_REGISTRY_IMAGE:$IMAGE_TAG_..."
-    - docker build -t $CI_REGISTRY_IMAGE:$IMAGE_TAG_ .
+    - echo "Building Docker image ${IMAGE_NAME_}:${IMAGE_TAG_}... from ${DOCKERFILE_NAME_} ${SRC_DIRECTORY_}"
+    - docker build -t $IMAGE_NAME_:$IMAGE_TAG_ -f $DOCKERFILE_NAME_ .
 
 
     - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
-    - docker push $CI_REGISTRY_IMAGE:$IMAGE_TAG_
+    - docker push $IMAGE_NAME_:$IMAGE_TAG_
 
     ## 2. Image file sharing mode
     # - echo "Saving Docker image to file $CI_PROJECT_NAME.tar"
-    # - docker save $CI_REGISTRY_IMAGE:$IMAGE_TAG_ -o $IMAGE_NAME_.tar
+    # - docker save $IMAGE_NAME_:$IMAGE_TAG_ -o $IMAGE_NAME_.tar
 
     # - scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp $IMAGE_NAME_.tar $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/.
 
+    ## Make docker-compose ready and export to server
+    - echo "Make docker-compose ready and export to server"
+    - sed -i "s|${IMAGE_NAME_PATTERN}|${IMAGE_NAME_}:${TARGET_IMAGE_TAG}|" ./docker-compose.yml
+    - sed -i "s|${EXPOSE_PORT_PATTERN}|${EXPOSE_PORT}|g" ./docker-compose.yml
+  artifacts:
+    paths:
+      - $SRC_DIRECTORY_/docker-compose.yml
+      - $SRC_DIRECTORY_/.env
+    expire_in: 1 hours
+##Now use image builder model
 
-deploy_docker_image:
+## Torbal
+
+# build_docker_eshop:
+#   extends: .build_docker_image
+#   variables:
+#     IMAGE_TAG_: toorball_eshop
+#     DOCKERFILE_NAME_: DockerfileEshop
+#     IMAGE_NAME_PATTERN: IMAGE_NAME_ESHOP
+#     EXPOSE_PORT_PATTERN: ESHOP_PORT
+#     TARGET_IMAGE_TAG: $IMAGE_TAG_
+#     EXPOSE_PORT: $lOCAL_PORT_ESHOP_TOORBALL
+#     ENV_FILE_: $ENV_FILE
+#     BRANCH: Torball
+
+
+# ### Top atr
+
+# build_docker_eshop_topatr:
+#   extends: .build_docker_image
+#   variables:
+#     IMAGE_TAG_: topatr_eshop
+#     DOCKERFILE_NAME_: DockerfileEshop
+#     IMAGE_NAME_PATTERN: IMAGE_NAME_ESHOP
+#     EXPOSE_PORT_PATTERN: ESHOP_PORT
+#     TARGET_IMAGE_TAG: $IMAGE_TAG_
+#     EXPOSE_PORT: $lOCAL_PORT_ESHOP_TOPATR
+#     ENV_FILE_: $ENV_FILE_TOPATR
+#     BRANCH: topatr
+
+
+
+
+## Deploy part
+.deploy_docker_image:
+  variables:
+    SSH_PRIVATE_KEY_:
+    SSH_PORT_:
+    SERVER_IP_:
+    SERVER_USER_:
+    SERVER_PATH_:
+    BRANCH:
   tags:
     - shell
   stage: deploy
-  only:
-      - beta
-  needs:
-    - build_docker_image
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $BRANCH || $BRANCH == ""'
   script:
-    
-    - echo "Copy .env file"
-    - cp $ENV_FILE_ .env
-
-
+    - cd $SRC_DIRECTORY_
+    # - echo "Copy .env file"
+    # - cp $ENV_FILE_ .env
     ## Get ready to send image file to server
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY_" > ~/.ssh/id_edtemp
     - chmod 600 ~/.ssh/id_edtemp
     - ssh-keyscan -p $SSH_PORT_ $SERVER_IP_ >> ~/.ssh/known_hosts
-
-    ## Make docker-compose ready and export to servre
-    - echo "Make docker-compose ready and export to servre"
-    - sed -i "s|image:.*|image:\ ${IMAGE_NAME_}:${IMAGE_TAG_}|" $SRC_DIRECTORY_/docker-compose.yml
-    - sed -i "s|\$EXPOSE_PORT|${lOCAL_PORT_}|g" $SRC_DIRECTORY_/docker-compose.yml
-
-    - scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp $SRC_DIRECTORY_/docker-compose.yml $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/.
-    - scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp $SRC_DIRECTORY_/.env $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/.
-
+    - scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp ./docker-compose.yml $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/new.docker-compose.yml
+    - scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp ./.env $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/.
     ## 1. Now push the Image to self registry
     - |
       ssh -p $SSH_PORT_ -o StrictHostKeyChecking=no \
@@ -94,11 +134,11 @@ deploy_docker_image:
             echo "Move to ${SERVER_PATH_}"
             cd ${SERVER_PATH_}
             echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
-            docker compose pull
+            docker compose -f new.docker-compose.yml pull
             docker compose down
+            mv new.docker-compose.yml docker-compose.yml
             docker compose up -d
       EOF
-
     ## 2. Image file sharing mode
     # - scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp $IMAGE_NAME_.tar $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/.
     # - rm $IMAGE_NAME_.tar
@@ -114,3 +154,29 @@ deploy_docker_image:
     #         docker compose down
     #         docker compose up -d
     #   EOF
+## Now use deploy image model
+
+# deploy_torbal:
+#   extends: .deploy_docker_image
+#   needs: 
+#     - build_docker_panel
+#   variables:
+#     SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY_CODEKIT
+#     SSH_PORT_: $SSH_PORT_CODEKIT
+#     SERVER_IP_: $SERVER_IP_CODEKIT
+#     SERVER_USER_: $SERVER_USER_CODEKIT  
+#     SERVER_PATH_: $SERVER_PATH_TOORBALL
+#     BRANCH: Torball
+
+
+# deploy_topatr:
+#   extends: .deploy_docker_image
+#   needs: 
+#     - build_docker_panel_topatr
+#   variables:
+#     SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY_CODEKIT
+#     SSH_PORT_: $SSH_PORT_CODEKIT
+#     SERVER_IP_: $SERVER_IP_CODEKIT
+#     SERVER_USER_: $SERVER_USER_CODEKIT  
+#     SERVER_PATH_: $SERVER_PATH_TOPATR
+#     BRANCH: topatr
