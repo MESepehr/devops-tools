@@ -35,7 +35,7 @@ build_react_app:
     paths:
       - node_modules/
   only:
-      - main
+      - malfada
   # rules:
   #   - if: '$CI_COMMIT_BRANCH == "main"'
 
