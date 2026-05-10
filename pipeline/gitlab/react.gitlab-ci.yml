@@ -10,6 +10,7 @@ variables:
   SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY
   ENV_FILE_: $ENV_FILE
   SSH_PORT_: $SSH_PORT
+  BRANCH: beta
 
 build_react_app:
   image: node:20
@@ -34,10 +35,9 @@ build_react_app:
         - package.json
     paths:
       - node_modules/
-  only:
-      - malfada
-  # rules:
-  #   - if: '$CI_COMMIT_BRANCH == "main"'
+  
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $BRANCH || $BRANCH == ""'
 
 deploy_app:
   stage: deploy
