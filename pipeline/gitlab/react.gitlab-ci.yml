@@ -9,6 +9,7 @@ variables:
   SERVER_PATH_: $SERVER_PATH
   SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY
   ENV_FILE_: $ENV_FILE
+  SSH_PORT_: $SSH_PORT
 
 build_react_app:
   image: node:20
@@ -21,7 +22,7 @@ build_react_app:
     - npm install --legacy-peer-deps
     - echo "Building the React application..."
     - cp "$ENV_FILE_" .env
-    - npm run build
+    - CI=false npm run build
     - echo "Build artifacts are ready in the '${BUILD_DIR_}' directory."
   artifacts:
     paths:
@@ -48,11 +49,11 @@ deploy_app:
     - echo "$SSH_PRIVATE_KEY_" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - ssh-keyscan $SERVER_IP_ >> ~/.ssh/known_hosts
+    - ssh-keyscan -p $SSH_PORT_  $SERVER_IP_ >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
   script:
     - echo "Deploying build artifacts to server..."
-    - rsync -avz --delete ${BUILD_DIR_}/ ${SERVER_USER_}@${SERVER_IP_}:${SERVER_PATH_}
+    - rsync -e "ssh -p $SSH_PORT_" -avz --delete ${BUILD_DIR_}/ ${SERVER_USER_}@${SERVER_IP_}:${SERVER_PATH_}
     - echo "Deployment complete!"
   # environment:
   #   name: production
