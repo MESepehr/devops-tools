@@ -9,6 +9,7 @@ variables:
   SERVER_IP_: $SERVER_IP_BETA
   SERVER_PATH_: $SERVER_PATH_BETA
   SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY_BETA
+  SSH_PORT_: $SSH_PORT
   ENV_FILE_: $ENV_BETA_SEP
 
 build:
@@ -42,12 +43,12 @@ build:
         - mv node_modules export/.
         - echo "Sync data to server"
         - apt install -y rsync
-        - rsync -az --delete ./export/* ${SERVER_USER_}@${SERVER_IP_}:${SERVER_PATH_}
-        - rsync -az --delete ./export/.* ${SERVER_USER_}@${SERVER_IP_}:${SERVER_PATH_}
+        - rsync -p $SSH_PORT_ -az --delete ./export/* ${SERVER_USER_}@${SERVER_IP_}:${SERVER_PATH_}
+        - rsync -p $SSH_PORT_ -az --delete ./export/.* ${SERVER_USER_}@${SERVER_IP_}:${SERVER_PATH_}
         - echo "Make node_modules back to cache folder"
         - mv export/node_modules .
         - |
-            ssh -o StrictHostKeyChecking=no \
+            ssh -p $SSH_PORT_ -o StrictHostKeyChecking=no \
                 -o IdentityFile=~/.ssh/id_edtemp \
                 $SERVER_USER_@$SERVER_IP_ << EOF
                     pm2 restart SepehrinoLanding
