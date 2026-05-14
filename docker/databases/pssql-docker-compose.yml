@@ -1,17 +1,20 @@
 services:
   postgres:
-    image: postgres:latest
-    container_name: postgres_container
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: $PS_PASS
-      POSTGRES_DB: postgres
+    build: .
+    container_name: pg_server
     ports:
       - "5432:5432"
+    environment:
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_PASSWORD=${PG_PASS}
+      - POSTGRES_DB=${PG_DB}
     volumes:
-      - ./postgres_data:/var/lib/postgresql
+      - ./pg_data:/var/lib/postgresql/data
+      - ./custom-postgres.conf:/etc/postgresql/postgresql.conf
     restart: unless-stopped
     env_file:
       - .env
+
 volumes:
-  postgres_data:
+  pg_data:
+    driver: local
