@@ -28,7 +28,7 @@ RUN chown -R www-data:www-data \
 # Expose port for artisan serve
 EXPOSE 8000
 
-RUN chmod +x ./start.sh
+RUN chmod +x ./start-laravel.sh
 
 # Default command: run Laravel's built-in server
 CMD ["./start-laravel.sh"]
