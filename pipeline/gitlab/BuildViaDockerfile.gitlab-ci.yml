@@ -38,13 +38,13 @@ variables:
       - build/
     expire_in: 1 hours
 
-build_docker_eshop:
+build_files:
   extends: .build_docker_image
   variables:
     DOCKERFILE_NAME_: Dockerfile
     BRANCH: main
     ENV_FILE_: 
-    BUILD_PATH: /app/build
+    BUILD_PATH: /app/build/web
 
 
 .deploy_built_files:
@@ -72,7 +72,7 @@ build_docker_eshop:
 deploy:
   extends: .deploy_built_files
   needs: 
-    - build_docker_panel
+    - build_files
   variables:
     SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY
     SSH_PORT_: $SSH_PORT
