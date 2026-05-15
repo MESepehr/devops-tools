@@ -1,0 +1,82 @@
+stages:
+  - build
+  - deploy
+
+##Global variables
+variables:
+  SRC_DIRECTORY_: '.'
+
+.build_docker_image:
+  variables:
+    DOCKERFILE_NAME_: Dockerfile
+    BRANCH: main
+    ENV_FILE_: 
+    BUILD_PATH: /app/build/web
+  tags:
+    - shell
+  stage: build
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $BRANCH || $BRANCH == ""'
+  script:
+    - cd $SRC_DIRECTORY_
+    - echo "Copy .env file"
+    - cp $ENV_FILE_ .env || true  # Don't fail if env file missing
+
+    - echo "Building Docker image ${IMAGE_NAME_}:${IMAGE_TAG_}... from ${DOCKERFILE_NAME_}"
+    - docker build -t $CI_REGISTRY_IMAGE -f $DOCKERFILE_NAME_ .
+    
+    - echo "Creating build directory"
+    - mkdir -p ./build/
+    
+    - echo "Copying artifacts from image"
+    - docker create --name temp_container $CI_REGISTRY_IMAGE
+    - docker cp temp_container:/$BUILD_PATH/. ./build/ || true
+    - docker rm temp_container
+
+  artifacts:
+    paths:
+      - build/
+    expire_in: 1 hours
+
+build_docker_eshop:
+  extends: .build_docker_image
+  variables:
+    DOCKERFILE_NAME_: Dockerfile
+    BRANCH: main
+    ENV_FILE_: 
+    BUILD_PATH: /app/build
+
+
+.deploy_built_files:
+  variables:
+    SSH_PRIVATE_KEY_:
+    SSH_PORT_:
+    SERVER_IP_:
+    SERVER_USER_:
+    SERVER_PATH_:
+    BRANCH:
+  tags:
+    - shell
+  stage: deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $BRANCH || $BRANCH == ""'
+  script:
+    - cd $SRC_DIRECTORY_
+    ## Get ready to send files to server
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY_" > ~/.ssh/id_edtemp
+    - chmod 600 ~/.ssh/id_edtemp
+    - ssh-keyscan -p $SSH_PORT_ $SERVER_IP_ >> ~/.ssh/known_hosts
+    - rsync -e "ssh -p $SSH_PORT_" -avz --delete ./build/* ${SERVER_USER_}@${SERVER_IP_}:${SERVER_PATH_}/
+
+deploy:
+  extends: .deploy_built_files
+  needs: 
+    - build_docker_panel
+  variables:
+    SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY
+    SSH_PORT_: $SSH_PORT
+    SERVER_IP_: $SERVER_IP
+    SERVER_USER_: $SERVER_USER  
+    SERVER_PATH_: $SERVER_PATH_TOORBALL
+    BRANCH: main
