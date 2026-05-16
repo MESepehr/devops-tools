@@ -67,7 +67,7 @@ build_files:
     - echo "$SSH_PRIVATE_KEY_" > ~/.ssh/id_edtemp
     - chmod 600 ~/.ssh/id_edtemp
     - ssh-keyscan -p $SSH_PORT_ $SERVER_IP_ >> ~/.ssh/known_hosts
-    - rsync -e "ssh -p $SSH_PORT_" -avz --delete ./build/* ${SERVER_USER_}@${SERVER_IP_}:${SERVER_PATH_}/
+    - rsync -e "ssh -p $SSH_PORT_ -i ~/.ssh/id_edtemp" -avz --delete ./build/* ${SERVER_USER_}@${SERVER_IP_}:${SERVER_PATH_}/
 
 deploy:
   extends: .deploy_built_files
@@ -78,5 +78,5 @@ deploy:
     SSH_PORT_: $SSH_PORT
     SERVER_IP_: $SERVER_IP
     SERVER_USER_: $SERVER_USER  
-    SERVER_PATH_: $SERVER_PATH_TOORBALL
+    SERVER_PATH_: $SERVER_PATH
     BRANCH: main
