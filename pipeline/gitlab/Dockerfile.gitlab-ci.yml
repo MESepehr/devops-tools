@@ -67,38 +67,6 @@ variables:
       - $SRC_DIRECTORY_/docker-compose.yml
       - $SRC_DIRECTORY_/.env
     expire_in: 1 hours
-##Now use image builder model
-
-## Torbal
-
-# build_docker_eshop:
-#   extends: .build_docker_image
-#   variables:
-#     IMAGE_TAG_: toorball_eshop
-#     DOCKERFILE_NAME_: DockerfileEshop
-#     IMAGE_NAME_PATTERN: IMAGE_NAME_ESHOP
-#     EXPOSE_PORT_PATTERN: ESHOP_PORT
-#     TARGET_IMAGE_TAG: $IMAGE_TAG_
-#     EXPOSE_PORT: $lOCAL_PORT_ESHOP_TOORBALL
-#     ENV_FILE_: $ENV_FILE
-#     BRANCH: Torball
-
-
-# ### Top atr
-
-# build_docker_eshop_topatr:
-#   extends: .build_docker_image
-#   variables:
-#     IMAGE_TAG_: topatr_eshop
-#     DOCKERFILE_NAME_: DockerfileEshop
-#     IMAGE_NAME_PATTERN: IMAGE_NAME_ESHOP
-#     EXPOSE_PORT_PATTERN: ESHOP_PORT
-#     TARGET_IMAGE_TAG: $IMAGE_TAG_
-#     EXPOSE_PORT: $lOCAL_PORT_ESHOP_TOPATR
-#     ENV_FILE_: $ENV_FILE_TOPATR
-#     BRANCH: topatr
-
-
 
 
 ## Deploy part
@@ -154,7 +122,6 @@ variables:
     #         docker compose down
     #         docker compose up -d
     #   EOF
-## Now use deploy image model
 
 # deploy_torbal:
 #   extends: .deploy_docker_image

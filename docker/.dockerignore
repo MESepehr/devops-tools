@@ -1,6 +1,10 @@
 .git
 node_modules
 .idea
+.vscode
+Docs
 *.log
 .gitlab-ci.yml
 .github
+.gitignore
+README.md
