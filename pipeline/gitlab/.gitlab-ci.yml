@@ -1,0 +1,32 @@
+include:
+  - local: '.gitlab-ci.Dockerfile‌Builder.yml'
+
+##Global variables
+variables:
+  IMAGE_NAME_: $CI_REGISTRY_IMAGE
+  SRC_DIRECTORY_: '.'
+
+build_karmaye:
+  extends: .build_docker_image
+  variables:
+    IMAGE_TAG_: latest
+    DOCKERFILE_NAME_: Dockerfile
+    IMAGE_NAME_PATTERN: IMAGE_NAME_ESHOP
+    EXPOSE_PORT_PATTERN: EXPOSE_PORT
+    EXPOSE_PORT: $lOCAL_PORT_KARMAYE
+    ENV_FILE_: $ENV_FILE_KARMAYE
+    GIT_TAG:
+    BRANCH: main
+
+deploy_karmaye:
+  extends: .deploy_docker_image
+  needs: 
+    - build_karmaye
+  variables:
+    SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY_KARMAYE
+    SSH_PORT_: $SSH_PORT_KARMAYE
+    SERVER_IP_: $SERVER_IP_KARMAYE
+    SERVER_USER_: $SERVER_USER_KARMAYE  
+    SERVER_PATH_: $SERVER_PATH_TOPATR
+    GIT_TAG:
+    BRANCH: main
