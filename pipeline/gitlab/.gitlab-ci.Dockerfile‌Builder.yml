@@ -23,9 +23,12 @@ variables:
     - shell
   stage: build
   rules:
-    - if: '$CI_COMMIT_BRANCH == $BRANCH || $BRANCH == ""'
-    # - if: 'GIT_TAG=="" || $CI_COMMIT_TAG =~ /^$GIT_TAG\d*$/'
+    - if: '( ($CI_COMMIT_TAG =~ $GIT_TAG ) || ( $GIT_TAG == "" && $BRANCH == $CI_COMMIT_BRANCH ) || ( $GIT_TAG == "" && $BRANCH == ""))'
   script:
+    - |
+      if [ "$CI_COMMIT_TAG" != "" ]; then
+        export IMAGE_TAG_=$CI_COMMIT_TAG
+      fi
     - cd $SRC_DIRECTORY_
     # - echo "Force Dockerfile to user runflare mirrors"
     # - sed -i 's|RUN npm install|RUN npm install --registry="https://package-mirror.liara.ir/repository/npm/"|' Dockerfile
@@ -50,13 +53,11 @@ variables:
       else
         echo "Skipping Microsoft images download (DOTNET is not true)"
       fi
-    
+
+    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
 
     - echo "Building Docker image ${IMAGE_NAME_}:${IMAGE_TAG_}... from ${DOCKERFILE_NAME_} ${SRC_DIRECTORY_}"
     - docker build -t $IMAGE_NAME_:$IMAGE_TAG_ -f $DOCKERFILE_NAME_ .
-
-
-    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
     - docker push $IMAGE_NAME_:$IMAGE_TAG_
 
     ## 2. Image file sharing mode
@@ -76,38 +77,6 @@ variables:
     expire_in: 1 hours
 ##Now use image builder model
 
-## Torbal
-
-# build_docker_eshop:
-#   extends: .build_docker_image
-#   variables:
-#     IMAGE_TAG_: toorball_eshop
-#     DOCKERFILE_NAME_: DockerfileEshop
-#     IMAGE_NAME_PATTERN: IMAGE_NAME_ESHOP
-#     EXPOSE_PORT_PATTERN: ESHOP_PORT
-#     EXPOSE_PORT: $lOCAL_PORT_ESHOP_TOORBALL
-#     ENV_FILE_: $ENV_FILE
-#     BRANCH: Torball
-#     GIT_TAG:
-#     DOTNET: true
-
-
-# ### Top atr
-
-# build_docker_eshop_topatr:
-#   extends: .build_docker_image
-#   variables:
-#     IMAGE_TAG_: topatr_eshop
-#     DOCKERFILE_NAME_: DockerfileEshop
-#     IMAGE_NAME_PATTERN: IMAGE_NAME_ESHOP
-#     EXPOSE_PORT_PATTERN: ESHOP_PORT
-#     EXPOSE_PORT: $lOCAL_PORT_ESHOP_TOPATR
-#     ENV_FILE_: $ENV_FILE_TOPATR
-#     BRANCH: topatr
-#     GIT_TAG:
-#     DOTNET: true
-
-
 
 
 ## Deploy part
@@ -124,8 +93,7 @@ variables:
     - shell
   stage: deploy
   rules:
-    - if: '$CI_COMMIT_BRANCH == $BRANCH || $BRANCH == ""'
-    # - if: 'GIT_TAG=="" || $CI_COMMIT_TAG =~ /^$GIT_TAG\d*$/'
+    - if: '( ($CI_COMMIT_TAG =~ $GIT_TAG ) || ( $GIT_TAG == "" && $BRANCH == $CI_COMMIT_BRANCH ) || ( $GIT_TAG == "" && $BRANCH == ""))'
   script:
     - cd $SRC_DIRECTORY_
     # - echo "Copy .env file"
@@ -165,25 +133,30 @@ variables:
     #         docker compose down
     #         docker compose up -d
     #   EOF
-## Now use deploy image model
 
-# deploy_torbal:
-#   extends: .deploy_docker_image
-#   needs: 
-#     - build_docker_panel
+
+
+
+## Examples
+
+# build_docker:
+#   extends: .build_docker_image
 #   variables:
-#     SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY_CODEKIT
-#     SSH_PORT_: $SSH_PORT_CODEKIT
-#     SERVER_IP_: $SERVER_IP_CODEKIT
-#     SERVER_USER_: $SERVER_USER_CODEKIT  
-#     SERVER_PATH_: $SERVER_PATH_TOORBALL
-#     BRANCH: Torball
+    # IMAGE_TAG_: toorball_eshop # Or use GIT_TAG and skip it
+    # DOCKERFILE_NAME_: Dockerfile
+    # IMAGE_NAME_PATTERN: # From docker-compose.yml file
+    # EXPOSE_PORT_PATTERN: # From docker-compose.yml file
+    # EXPOSE_PORT: # From gitlab variables
+    # BRANCH: # Branch name
+    # GIT_TAG: /^karmaye-/ # tag patter or leave it empty
+    # ENV_FILE_: # env file in variables
+    # DOTNET: false # make it true if you are deploying .net projects
 
 
-# deploy_topatr:
+# deploy_docker:
 #   extends: .deploy_docker_image
 #   needs: 
-#     - build_docker_panel_topatr
+#     - build_docker # Name the earlier action
 #   variables:
 #     SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY_CODEKIT
 #     SSH_PORT_: $SSH_PORT_CODEKIT
@@ -191,3 +164,4 @@ variables:
 #     SERVER_USER_: $SERVER_USER_CODEKIT  
 #     SERVER_PATH_: $SERVER_PATH_TOPATR
 #     BRANCH: topatr
+
