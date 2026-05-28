@@ -1,12 +1,12 @@
 services:
   gitlab-runner:
     build: .
-    privileged: false
-    cap_add:
-      - SYS_ADMIN
-    security_opt:
-      - seccomp:unconfined
-      - apparmor:unconfined   # <-- این خط را اضافه کن
+    privileged: true
+#    cap_add:
+#      - SYS_ADMIN
+#    security_opt:
+#      - seccomp:unconfined
+#      - apparmor:unconfined
     container_name: gitlab-runner
     restart: unless-stopped
     volumes:
