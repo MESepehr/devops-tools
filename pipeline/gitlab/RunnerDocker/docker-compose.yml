@@ -1,0 +1,21 @@
+services:
+  gitlab-runner:
+    build: .
+    privileged: false
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp:unconfined
+      - apparmor:unconfined   # <-- این خط را اضافه کن
+    container_name: gitlab-runner
+    restart: unless-stopped
+    volumes:
+      - ./config:/etc/gitlab-runner
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
+        #reservations:
+        #  cpus: '0.5'
+        #  memory: 512M

@@ -38,4 +38,4 @@ shutdown_timeout = 0
   executor = "shell"
   [runners.cache]
     MaxUploadedArchiveSize = 0
-#    Path = "/home/gitlab-runner/cache_for_shell"
+#    Path = "/home/gitlab-runner/cache_for_shell"d

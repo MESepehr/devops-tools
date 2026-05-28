@@ -1,0 +1,16 @@
+concurrent = 2
+check_interval = 0
+connection_max_age = "15m0s"
+shutdown_timeout = 0
+
+[session_server]
+  session_timeout = 1800
+
+[[runners]]
+  name = "mhelli"
+  url = "https://git.ngtartanak.co.ir/"
+  token = "glrt-mPAavxcKIr-3oEtiKxVjI2c6aApvOjEKdDoyCnU6Ng8.01.170p7h020"
+  executor = "shell"
+  [runners.cache]
+    MaxUploadedArchiveSize = 0
+#    Path = "/home/gitlab-runner/cache_for_shell"d
