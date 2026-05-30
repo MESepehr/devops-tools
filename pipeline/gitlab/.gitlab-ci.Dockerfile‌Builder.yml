@@ -107,8 +107,8 @@ variables:
     - echo "$SSH_PRIVATE_KEY_" > ~/.ssh/id_edtemp
     - chmod 600 ~/.ssh/id_edtemp
     - ssh-keyscan -p $SSH_PORT_ $SERVER_IP_ >> ~/.ssh/known_hosts
-    - scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp ./docker-compose.yml $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/new.docker-compose.yml
-    - scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp ./.env $SERVER_USER_@$SERVER_IP_:~/$SERVER_PATH_/.
+    - scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp ./docker-compose.yml $SERVER_USER_@$SERVER_IP_:$SERVER_PATH_/new.docker-compose.yml
+    - scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp ./.env $SERVER_USER_@$SERVER_IP_:$SERVER_PATH_/.
     ## 1. Now push the Image to self registry
     - |
       ssh -p $SSH_PORT_ -o StrictHostKeyChecking=no \
@@ -166,6 +166,6 @@ variables:
 #     SSH_PORT_: $SSH_PORT_CODEKIT
 #     SERVER_IP_: $SERVER_IP_CODEKIT
 #     SERVER_USER_: $SERVER_USER_CODEKIT  
-#     SERVER_PATH_: $SERVER_PATH_TOPATR
+#     SERVER_PATH_: $SERVER_PATH_TOPATR # like ./shop
 #     BRANCH: topatr
 
