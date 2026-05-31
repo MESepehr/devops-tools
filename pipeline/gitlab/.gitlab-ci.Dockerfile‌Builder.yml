@@ -91,6 +91,7 @@ variables:
     SERVER_IP_:
     SERVER_USER_:
     SERVER_PATH_:
+    ENV_FILE_NAME_: .env
     GIT_TAG:
     BRANCH:
   tags:
@@ -107,8 +108,16 @@ variables:
     - echo "$SSH_PRIVATE_KEY_" > ~/.ssh/id_edtemp
     - chmod 600 ~/.ssh/id_edtemp
     - ssh-keyscan -p $SSH_PORT_ $SERVER_IP_ >> ~/.ssh/known_hosts
+
+    - |
+      ssh -p $SSH_PORT_ -o StrictHostKeyChecking=no \
+          -o IdentityFile=~/.ssh/id_edtemp \
+          $SERVER_USER_@$SERVER_IP_ << EOF
+            mkdir -p ${SERVER_PATH_}
+      EOF
+
     - scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp ./docker-compose.yml $SERVER_USER_@$SERVER_IP_:$SERVER_PATH_/new.docker-compose.yml
-    - scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp ./.env $SERVER_USER_@$SERVER_IP_:$SERVER_PATH_/.
+    - scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp ./$ENV_FILE_NAME_ $SERVER_USER_@$SERVER_IP_:$SERVER_PATH_/$ENV_FILE_NAME_
     ## 1. Now push the Image to self registry
     - |
       ssh -p $SSH_PORT_ -o StrictHostKeyChecking=no \
