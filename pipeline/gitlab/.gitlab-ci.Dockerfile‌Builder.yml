@@ -36,7 +36,7 @@ variables:
     # - sed -i 's|RUN pip install|RUN pip install -i https://mirror-pypi.runflare.com/simple|' Dockerfile
     - echo "Copy $ENV_FILE_NAME_ file"
     - |
-      if [ -z "$ENV_FILE_" ]; then
+      if [ -f "$ENV_FILE_" ]; then
         cp $ENV_FILE_ $ENV_FILE_NAME_
       fi
 
