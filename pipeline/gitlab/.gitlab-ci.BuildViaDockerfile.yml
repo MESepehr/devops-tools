@@ -12,8 +12,6 @@ variables:
     BRANCH: main
     ENV_FILE_: 
     BUILD_PATH: /app/build/web
-  tags:
-    - shell
   stage: build
   rules:
     - if: '$CI_COMMIT_BRANCH == $BRANCH || $BRANCH == ""'
@@ -31,7 +29,7 @@ variables:
       fi
 
     - echo "Building Docker image ${IMAGE_NAME_}:${IMAGE_TAG_}... from ${DOCKERFILE_NAME_}"
-    - docker build -t $CI_REGISTRY_IMAGE -f $DOCKERFILE_NAME_ .
+    - docker build --network=host -t $CI_REGISTRY_IMAGE -f $DOCKERFILE_NAME_ .
     
     - echo "Creating build directory"
     - mkdir -p ./build/
@@ -56,8 +54,6 @@ variables:
     SERVER_USER_:
     SERVER_PATH_:
     BRANCH:
-  tags:
-    - shell
   stage: deploy
   rules:
     - if: '$CI_COMMIT_BRANCH == $BRANCH || $BRANCH == ""'
