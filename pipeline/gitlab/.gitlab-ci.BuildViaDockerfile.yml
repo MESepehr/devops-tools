@@ -6,7 +6,7 @@ stages:
 variables:
   SRC_DIRECTORY_: '.'
 
-.build_docker_image:
+.build_via_docker_image:
   variables:
     DOCKERFILE_NAME_: Dockerfile
     BRANCH: main
@@ -18,9 +18,17 @@ variables:
   rules:
     - if: '$CI_COMMIT_BRANCH == $BRANCH || $BRANCH == ""'
   script:
+    - |
+      if [ "$CI_COMMIT_REF_PROTECTED" != "true" ]; then
+        echo "Error: You should run the action only on protected branches!!"
+        exit 1
+      fi
     - cd $SRC_DIRECTORY_
-    - echo "Copy .env file"
-    - cp $ENV_FILE_ .env || true  # Don't fail if env file missing
+    - |
+      if [ -f "$ENV_FILE_" ]; then
+        echo "Copy .env file"
+        cp $ENV_FILE_ .env
+      fi
 
     - echo "Building Docker image ${IMAGE_NAME_}:${IMAGE_TAG_}... from ${DOCKERFILE_NAME_}"
     - docker build -t $CI_REGISTRY_IMAGE -f $DOCKERFILE_NAME_ .
@@ -38,13 +46,6 @@ variables:
       - build/
     expire_in: 1 hours
 
-build_files:
-  extends: .build_docker_image
-  variables:
-    DOCKERFILE_NAME_: Dockerfile
-    BRANCH: main
-    ENV_FILE_: 
-    BUILD_PATH: /app/build/web
 
 
 .deploy_built_files:
@@ -67,16 +68,33 @@ build_files:
     - echo "$SSH_PRIVATE_KEY_" > ~/.ssh/id_edtemp
     - chmod 600 ~/.ssh/id_edtemp
     - ssh-keyscan -p $SSH_PORT_ $SERVER_IP_ >> ~/.ssh/known_hosts
+    - |
+      ssh -p $SSH_PORT_ -o StrictHostKeyChecking=no \
+          -o IdentityFile=~/.ssh/id_edtemp \
+          $SERVER_USER_@$SERVER_IP_ << EOF
+            mkdir -p ${SERVER_PATH_}
+      EOF
     - rsync -e "ssh -p $SSH_PORT_ -i ~/.ssh/id_edtemp" -avz --delete ./build/* ${SERVER_USER_}@${SERVER_IP_}:${SERVER_PATH_}/
 
-deploy:
-  extends: .deploy_built_files
-  needs: 
-    - build_files
-  variables:
-    SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY
-    SSH_PORT_: $SSH_PORT
-    SERVER_IP_: $SERVER_IP
-    SERVER_USER_: $SERVER_USER  
-    SERVER_PATH_: $SERVER_PATH
-    BRANCH: main
+
+
+# build_files:
+#   extends: .build_docker_image
+#   variables:
+#     DOCKERFILE_NAME_: Dockerfile
+#     BRANCH: main
+#     ENV_FILE_: 
+#     BUILD_PATH: /app/build/web
+
+
+# deploy:
+#   extends: .deploy_built_files
+#   needs: 
+#     - build_files
+#   variables:
+#     SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY
+#     SSH_PORT_: $SSH_PORT
+#     SERVER_IP_: $SERVER_IP
+#     SERVER_USER_: $SERVER_USER  
+#     SERVER_PATH_: $SERVER_PATH
+#     BRANCH: main
