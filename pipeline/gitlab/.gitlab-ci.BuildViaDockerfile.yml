@@ -70,7 +70,6 @@ variables:
           $SERVER_USER_@$SERVER_IP_ << EOF
             mkdir -p ${SERVER_PATH_}
       EOF
-    - apt install -y rsync
     # - scp -P ${SSH_PORT_} -i ~/.ssh/id_edtemp -r ./build/* ${SERVER_USER_}@${SERVER_IP_}:${SERVER_PATH_}/
     - rsync -e "ssh -p $SSH_PORT_ -i ~/.ssh/id_edtemp" -avz --delete ./build/* ${SERVER_USER_}@${SERVER_IP_}:${SERVER_PATH_}/
 
