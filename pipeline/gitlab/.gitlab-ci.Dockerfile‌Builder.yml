@@ -61,7 +61,7 @@ variables:
     - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
 
     - echo "Building Docker image ${IMAGE_NAME_}:${IMAGE_TAG_}... from ${DOCKERFILE_NAME_} ${SRC_DIRECTORY_}"
-    - docker build --network=host -t $IMAGE_NAME_:$IMAGE_TAG_ -f $DOCKERFILE_NAME_ .
+    - docker build  --network=host -t $IMAGE_NAME_:$IMAGE_TAG_ -f $DOCKERFILE_NAME_ .
     - docker push $IMAGE_NAME_:$IMAGE_TAG_
 
     ## 2. Image file sharing mode
@@ -116,8 +116,14 @@ variables:
             mkdir -p ${SERVER_PATH_}
       EOF
 
-    - scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp ./docker-compose.yml $SERVER_USER_@$SERVER_IP_:$SERVER_PATH_/new.docker-compose.yml
-    - scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp ./$ENV_FILE_NAME_ $SERVER_USER_@$SERVER_IP_:$SERVER_PATH_/$ENV_FILE_NAME_
+    - |
+      if [ -f "./docker-compose.yml" ]; then
+        scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp ./docker-compose.yml $SERVER_USER_@$SERVER_IP_:$SERVER_PATH_/new.docker-compose.yml
+      fi
+    - |
+      if [ -f "./$ENV_FILE_NAME_"] ; then
+        scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp ./$ENV_FILE_NAME_ $SERVER_USER_@$SERVER_IP_:$SERVER_PATH_/$ENV_FILE_NAME_
+      fi
     ## 1. Now push the Image to self registry
     - |
       ssh -p $SSH_PORT_ -o StrictHostKeyChecking=no \
