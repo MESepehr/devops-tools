@@ -4,7 +4,7 @@ node_modules
 .vscode
 Docs
 *.log
-.gitlab-ci.yml
+.gitlab-*.yml
 .github
 .gitignore
 README.md
