@@ -49,7 +49,7 @@ variables:
 .deploy_built_files:
   variables:
     SSH_PRIVATE_KEY_:
-    SSH_PORT_:
+    SSH_PORT_: 22
     SERVER_IP_:
     SERVER_USER_:
     SERVER_PATH_:
