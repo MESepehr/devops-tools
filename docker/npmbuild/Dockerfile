@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:16.0.0 AS builder
+FROM node:20.0.0 AS builder
 
 # Copy package files first for better caching
 COPY ./package.json ./package-lock.json* ./
