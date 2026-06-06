@@ -1,7 +1,7 @@
 FROM ubuntu:22.04 AS my_runner
 
-RUN sed -i 's/archive.ubuntu.com/mirror.arvancloud.ir/g' /etc/apt/sources.list
-RUN sed -i 's/security.ubuntu.com/mirror.arvancloud.ir/g' /etc/apt/sources.list
+RUN sed -i 's/archive.ubuntu.com/linux-mirror.liara.ir\/repository/g' /etc/apt/sources.list
+RUN sed -i 's/security.ubuntu.com/linux-mirror.liara.ir\/repository/g' /etc/apt/sources.list
 
 RUN apt update
 RUN apt upgrade -y
@@ -27,6 +27,8 @@ RUN usermod -aG docker gitlab-runner
 #ENV DOCKER_BUILDKIT=0
 
 RUN gitlab-runner start
+
+RUN apt install -y rsync
 
 CMD ["/bin/bash", "-c", "gitlab-runner start && dockerd"]
 #CMD ["gitlab-runner", "run"]
