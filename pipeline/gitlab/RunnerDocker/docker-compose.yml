@@ -11,6 +11,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./config:/etc/gitlab-runner
+      - ./docker-data:/var/lib/docker
     deploy:
       resources:
         limits:
