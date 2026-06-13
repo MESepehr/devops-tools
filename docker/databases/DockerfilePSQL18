@@ -1,0 +1,10 @@
+FROM postgres:18
+
+RUN apt-get update && \
+    apt-get install -y postgresql-server-dev-18 build-essential git && \
+    git clone https://github.com/pgvector/pgvector.git && \
+    cd pgvector && \
+    make && \
+    make install && \
+    cd .. && rm -rf pgvector && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
