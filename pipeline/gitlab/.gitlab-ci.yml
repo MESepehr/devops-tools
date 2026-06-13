@@ -6,27 +6,27 @@ variables:
   IMAGE_NAME_: $CI_REGISTRY_IMAGE
   SRC_DIRECTORY_: '.'
 
-build_karmaye:
+build_docker:
   extends: .build_docker_image
   variables:
     IMAGE_TAG_: latest
     DOCKERFILE_NAME_: Dockerfile
-    IMAGE_NAME_PATTERN: IMAGE_NAME_ESHOP
+    IMAGE_NAME_PATTERN: GITHUB_IMAGE_NAME
     EXPOSE_PORT_PATTERN: EXPOSE_PORT
-    EXPOSE_PORT: $lOCAL_PORT_KARMAYE
-    ENV_FILE_: $ENV_FILE_KARMAYE
+    EXPOSE_PORT: $lOCAL_PORT
+    ENV_FILE_: $ENV_FILE
     GIT_TAG:
-    BRANCH: main
+    BRANCH: master
 
-deploy_karmaye:
+deploy_docker:
   extends: .deploy_docker_image
   needs: 
-    - build_karmaye
+    - build_docker
   variables:
-    SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY_KARMAYE
-    SSH_PORT_: $SSH_PORT_KARMAYE
-    SERVER_IP_: $SERVER_IP_KARMAYE
-    SERVER_USER_: $SERVER_USER_KARMAYE  
-    SERVER_PATH_: $SERVER_PATH_TOPATR
+    SSH_PRIVATE_KEY_: $SSH_PRIVATE_KEY_VAKILEMON
+    SSH_PORT_: $SSH_PORT_VAKILEMON
+    SERVER_IP_: $SERVER_IP_VAKILEMON
+    SERVER_USER_: $SERVER_USER_VAKILEMON
+    SERVER_PATH_: $SERVER_PATH_HOOSHANG_BACK
     GIT_TAG:
-    BRANCH: main
+    BRANCH: master
