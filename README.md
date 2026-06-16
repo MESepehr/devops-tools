@@ -1,54 +1,54 @@
 # DevOps Tools
 
-این ریپو مجموعه‌ای از قالب‌ها و ابزارهای آماده برای راه‌اندازی، build، deploy و نگهداری سرویس‌هاست. ساختار پوشه‌ها عمداً ساده نگه داشته شده تا بتوانید هر بخش را در پروژه مقصد کپی کنید یا مستقیم از همین ریپو به عنوان مرجع استفاده کنید.
+This repository is a small collection of reusable DevOps templates and operational helpers for building, deploying, and running common services. The folder layout is intentionally simple so each piece can be copied into another project or used directly as a reference.
 
-## فهرست سریع
+## Quick Map
 
 ```text
 docker/
-  Dockerfile-laravel          قالب Docker برای Laravel
-  Dockerfile-nextjs           قالب Docker برای Next.js با PM2
-  Dockerfile-python           قالب Docker برای Python/Gunicorn
-  docker-compose.yml          قالب عمومی اجرای image ساخته شده
-  npmbuild/Dockerfile         قالب build برای پروژه‌های npm
-  dotnet/                     قالب Docker و compose برای .NET
+  Dockerfile-laravel          Docker template for Laravel
+  Dockerfile-nextjs           Docker template for Next.js with PM2
+  Dockerfile-python           Docker template for Python/Gunicorn
+  docker-compose.yml          Generic compose template for a built image
+  npmbuild/Dockerfile         Build-only template for npm projects
+  dotnet/                     Docker and compose templates for .NET
   databases/                  PostgreSQL, PostgreSQL + pgvector, MySQL, MSSQL
-  gitlab/                     اجرای GitLab CE با Docker Compose
-  metabase/                   اجرای Metabase با PostgreSQL
+  gitlab/                     GitLab CE with Docker Compose
+  metabase/                   Metabase with PostgreSQL
 nginx/
-  laravel.config              reverse proxy و فایل سرور برای Laravel/API
-  react.config                نمونه serve کردن SPA و proxy مسیر /api
-  proxyport.config            reverse proxy به یک پورت داخلی
-  proxyothersite.config       reverse proxy به یک سایت دیگر
+  laravel.config              Reverse proxy and file server sample for Laravel/API
+  react.config                SPA static serving with an /api proxy sample
+  proxyport.config            Reverse proxy to a local port
+  proxyothersite.config       Reverse proxy to another website
 pipeline/gitlab/
-  *.yml                       قالب‌های GitLab CI برای Docker و static build
-  RunnerDocker/               GitLab Runner داخل Docker
+  *.yml                       GitLab CI templates for Docker and static builds
+  RunnerDocker/               GitLab Runner running inside Docker
 shellscripts/
-  setupUbuntuIran.sh          تغییر mirrorهای Ubuntu به mirror داخلی
-  setupDockerIran.sh          نصب Docker و Docker Compose با mirror داخلی
+  setupUbuntuIran.sh          Switch Ubuntu apt mirrors to an Iran mirror
+  setupDockerIran.sh          Install Docker and Docker Compose using Iran mirrors
 ```
 
-## شروع سریع سرور
+## Server Quick Start
 
-برای تغییر mirrorهای Ubuntu و آپدیت سیستم:
+Switch Ubuntu apt mirrors and update the server:
 
 ```bash
 curl -sf https://git.ngtartanak.co.ir/codekit/devops-tools/-/raw/main/shellscripts/setupUbuntuIran.sh | bash
 ```
 
-برای نصب Docker و پلاگین Docker Compose:
+Install Docker and the Docker Compose plugin:
 
 ```bash
 curl -sf https://git.ngtartanak.co.ir/codekit/devops-tools/-/raw/main/shellscripts/setupDockerIran.sh | bash
 ```
 
-نکته: این دو اسکریپت فایل‌های apt را تغییر می‌دهند و باید با دسترسی root اجرا شوند. قبل از تغییر، از فایل‌های موجود backup می‌گیرند.
+Note: these scripts modify apt and Docker configuration files and should be run with root privileges. The Ubuntu mirror script creates backups before changing apt source files.
 
 ## Docker
 
-قالب عمومی اجرا در [docker/docker-compose.yml](/Users/mesepehr/Desktop/Projects/devops-tools/docker/docker-compose.yml) قرار دارد. در pipelineها معمولاً مقدارهای `GITHUB_IMAGE_NAME` و `EXPOSE_PORT` با `sed` جایگزین می‌شوند.
+The generic runtime compose file is in [docker/docker-compose.yml](docker/docker-compose.yml). In the GitLab CI templates, placeholders such as `GITHUB_IMAGE_NAME` and `EXPOSE_PORT` are usually replaced with `sed`.
 
-اجرای دستی یک image:
+Run a generated image manually:
 
 ```bash
 cd docker
@@ -56,19 +56,19 @@ cp .env.example .env 2>/dev/null || touch .env
 docker compose up -d
 ```
 
-قالب‌های اپلیکیشن:
+Application templates:
 
-- [docker/Dockerfile-laravel](/Users/mesepehr/Desktop/Projects/devops-tools/docker/Dockerfile-laravel): نصب Composer dependencyها، اجرای migration/cache و سرو با `php artisan serve`.
-- [docker/Dockerfile-nextjs](/Users/mesepehr/Desktop/Projects/devops-tools/docker/Dockerfile-nextjs): build چندمرحله‌ای Next.js، اجرای production با `pm2-runtime` روی پورت `3000`.
-- [docker/Dockerfile-python](/Users/mesepehr/Desktop/Projects/devops-tools/docker/Dockerfile-python): نصب `requirements.txt` و اجرای `gunicorn app.main:app`.
-- [docker/npmbuild/Dockerfile](/Users/mesepehr/Desktop/Projects/devops-tools/docker/npmbuild/Dockerfile): فقط برای build پروژه‌های npm و خروجی گرفتن از artifact.
-- [docker/dotnet/Dockerfile](/Users/mesepehr/Desktop/Projects/devops-tools/docker/dotnet/Dockerfile): publish پروژه `Eshop` با .NET 9 و اجرای خروجی با runtime image.
+- [docker/Dockerfile-laravel](docker/Dockerfile-laravel): installs Composer dependencies, runs Laravel migration/cache commands, and serves with `php artisan serve`.
+- [docker/Dockerfile-nextjs](docker/Dockerfile-nextjs): multi-stage Next.js build and production runtime with `pm2-runtime` on port `3000`.
+- [docker/Dockerfile-python](docker/Dockerfile-python): installs `requirements.txt` and runs `gunicorn app.main:app`.
+- [docker/npmbuild/Dockerfile](docker/npmbuild/Dockerfile): build-only npm image for artifact extraction.
+- [docker/dotnet/Dockerfile](docker/dotnet/Dockerfile): publishes the `Eshop` project with .NET 9 and runs it with the ASP.NET runtime image.
 
-## دیتابیس‌ها
+## Databases
 
-فایل‌های دیتابیس در [docker/databases](/Users/mesepehr/Desktop/Projects/devops-tools/docker/databases) هستند و از `.env` همان پوشه می‌خوانند.
+Database compose files live in [docker/databases](docker/databases) and read variables from the `.env` file in that directory.
 
-متغیرهای رایج:
+Common variables:
 
 ```env
 PG_USER=postgres
@@ -80,7 +80,7 @@ DB_PASS=change_me
 SA_PASS=Change_me_strong_password1!
 ```
 
-اجرای نمونه‌ها:
+Run the samples:
 
 ```bash
 cd docker/databases
@@ -90,9 +90,9 @@ docker compose -f mysql-docker-compose.yml up -d
 docker compose -f mssql-docker-compose.yml up -d
 ```
 
-PostgreSQL 18 از [DockerfilePSQL18](/Users/mesepehr/Desktop/Projects/devops-tools/docker/databases/DockerfilePSQL18) استفاده می‌کند و extension مربوط به `pgvector` را build می‌کند.
+PostgreSQL 18 uses [DockerfilePSQL18](docker/databases/DockerfilePSQL18) and builds the `pgvector` extension.
 
-بکاپ و restore:
+Backup and restore helpers:
 
 ```bash
 cd docker/databases
@@ -103,9 +103,9 @@ DB_NAME=example_db ./mssql_backup.sh
 
 ## GitLab CI
 
-قالب اصلی Docker build/deploy در [pipeline/gitlab/.gitlab-ci.DockerfileBuilder.yml](/Users/mesepehr/Desktop/Projects/devops-tools/pipeline/gitlab/.gitlab-ci.DockerfileBuilder.yml) است. فایل [pipeline/gitlab/.gitlab-ci.yml](/Users/mesepehr/Desktop/Projects/devops-tools/pipeline/gitlab/.gitlab-ci.yml) نمونه استفاده از همین template است.
+The main Docker build/deploy template is [pipeline/gitlab/.gitlab-ci.DockerfileBuilder.yml](pipeline/gitlab/.gitlab-ci.DockerfileBuilder.yml). [pipeline/gitlab/.gitlab-ci.yml](pipeline/gitlab/.gitlab-ci.yml) shows a sample pipeline that extends it.
 
-متغیرهای مهم برای build/deploy:
+Important build/deploy variables:
 
 ```text
 CI_REGISTRY
@@ -121,47 +121,47 @@ SERVER_USER_*
 SERVER_PATH_*
 ```
 
-قالب‌های دیگر:
+Other templates:
 
-- [pipeline/gitlab/.gitlab-ci.BuildViaDockerfile.yml](/Users/mesepehr/Desktop/Projects/devops-tools/pipeline/gitlab/.gitlab-ci.BuildViaDockerfile.yml): build داخل Docker و کپی artifact از container.
-- [pipeline/gitlab/react.gitlab-ci.yml](/Users/mesepehr/Desktop/Projects/devops-tools/pipeline/gitlab/react.gitlab-ci.yml): build پروژه React و deploy خروجی با `rsync`.
-- [pipeline/gitlab/nextjs.gitlab-ci.yml](/Users/mesepehr/Desktop/Projects/devops-tools/pipeline/gitlab/nextjs.gitlab-ci.yml): build پروژه Next.js و sync خروجی به سرور.
-- [pipeline/gitlab/DirectOnServer.gitlab-ci.yml](/Users/mesepehr/Desktop/Projects/devops-tools/pipeline/gitlab/DirectOnServer.gitlab-ci.yml): pull/build مستقیم روی سرور و restart با PM2.
-- [pipeline/gitlab/RunnerDocker](/Users/mesepehr/Desktop/Projects/devops-tools/pipeline/gitlab/RunnerDocker): اجرای GitLab Runner همراه Docker daemon.
+- [pipeline/gitlab/.gitlab-ci.BuildViaDockerfile.yml](pipeline/gitlab/.gitlab-ci.BuildViaDockerfile.yml): builds inside Docker and copies artifacts out of the container.
+- [pipeline/gitlab/react.gitlab-ci.yml](pipeline/gitlab/react.gitlab-ci.yml): builds a React app and deploys the static output with `rsync`.
+- [pipeline/gitlab/nextjs.gitlab-ci.yml](pipeline/gitlab/nextjs.gitlab-ci.yml): builds a Next.js app and syncs runtime files to a server.
+- [pipeline/gitlab/DirectOnServer.gitlab-ci.yml](pipeline/gitlab/DirectOnServer.gitlab-ci.yml): pulls, builds, and restarts with PM2 directly on the server.
+- [pipeline/gitlab/RunnerDocker](pipeline/gitlab/RunnerDocker): runs a GitLab Runner with a Docker daemon.
 
 ## Nginx
 
-نمونه‌ها در [nginx](/Users/mesepehr/Desktop/Projects/devops-tools/nginx) هستند. قبل از استفاده، مقدارهای `server_name`، مسیرهای `root` و پورت‌های داخلی را با پروژه مقصد هماهنگ کنید.
+Nginx samples are in [nginx](nginx). Before using them, update `server_name`, `root` paths, upstream ports, and domain-specific values for the target project.
 
-بعد از کپی به `/etc/nginx/sites-available`:
+After copying a config to `/etc/nginx/sites-available`:
 
 ```bash
 sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-## GitLab و Metabase
+## GitLab And Metabase
 
-برای GitLab CE:
+Run GitLab CE:
 
 ```bash
 cd docker/gitlab
 docker compose up -d
 ```
 
-قبل از اجرا مقدارهای `.env`، دامنه‌ها، SSL certificate pathها و `GITLAB_HOME` را تنظیم کنید.
+Before running it, configure `.env`, domains, SSL certificate paths, and `GITLAB_HOME`.
 
-برای Metabase:
+Run Metabase:
 
 ```bash
 cd docker/metabase
 docker compose up -d
 ```
 
-سرویس Metabase به صورت پیش‌فرض فقط روی `127.0.0.1:3000` bind شده تا پشت Nginx یا tunnel استفاده شود.
+Metabase is bound to `127.0.0.1:3000` by default so it can be exposed through Nginx or a tunnel.
 
-## نکته‌های نگهداری
+## Maintenance Notes
 
-- فایل‌های `.env` واقعی را commit نکنید؛ این ریپو چند نمونه عملیاتی دارد، ولی برای پروژه‌های بعدی بهتر است مقدارهای حساس را در GitLab CI Variables یا secret manager نگه دارید.
-- قبل از استفاده از هر template، نام image، پورت expose، مسیر app و branch/tag ruleها را بررسی کنید.
-- برای deployهای production ابتدا روی یک branch یا سرور آزمایشی اجرا کنید، مخصوصاً templateهایی که `docker compose down` یا `rsync --delete` دارند.
+- Do not commit real `.env` files. This repository contains operational examples, but project secrets should usually live in GitLab CI Variables or a secret manager.
+- Before using any template, review the image name, exposed port, app path, and branch/tag rules.
+- Test production deploy templates on a staging branch or server first, especially templates that use `docker compose down` or `rsync --delete`.
