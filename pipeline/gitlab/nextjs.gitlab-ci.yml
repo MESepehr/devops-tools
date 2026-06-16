@@ -31,10 +31,10 @@ build:
     script:
         - echo "Switch to Iran mirror for npm"
         # - npm config set registry https://mirror-npm.runflare.com
-        - npm --silent i --force
+        - if [ -f package-lock.json ]; then npm ci --silent; else npm install --silent; fi
         - echo "Set .env file to project"
         # - cp .env.example .env
-        - cp $ENV_FILE_ ./.env
+        - if [ -f "$ENV_FILE_" ]; then cp "$ENV_FILE_" ./.env; fi
         - npm --silent run build
         - mkdir export
         - mv .env export/.
@@ -43,13 +43,11 @@ build:
         - mv node_modules export/.
         - echo "Sync data to server"
         - apt install -y rsync
-        - rsync -p $SSH_PORT_ -az --delete ./export/* ${SERVER_USER_}@${SERVER_IP_}:${SERVER_PATH_}
-        - rsync -p $SSH_PORT_ -az --delete ./export/.* ${SERVER_USER_}@${SERVER_IP_}:${SERVER_PATH_}
+        - rsync -e "ssh -p $SSH_PORT_" -az --delete ./export/ ${SERVER_USER_}@${SERVER_IP_}:${SERVER_PATH_}
         - echo "Make node_modules back to cache folder"
         - mv export/node_modules .
         - |
             ssh -p $SSH_PORT_ -o StrictHostKeyChecking=no \
-                -o IdentityFile=~/.ssh/id_edtemp \
                 $SERVER_USER_@$SERVER_IP_ << EOF
                     pm2 restart SepehrinoLanding
             EOF

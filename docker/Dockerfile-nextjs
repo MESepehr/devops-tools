@@ -6,8 +6,8 @@ WORKDIR /app
 # Copy package files first for better caching
 COPY ./package.json ./package-lock.json* ./
 
-# Install dependencies (including devDependencies for build)
-RUN npm install --frozen-lockfile --force
+# Install dependencies, preferring the lockfile when it exists.
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 # Copy all files
 COPY ./. .
@@ -39,7 +39,7 @@ EXPOSE 3000
 
 # Health check with PM2
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
-  CMD curl -f http://localhost:3000/ || exit 1
+  CMD wget -qO- http://localhost:3000/ >/dev/null || exit 1
 
 # Start with PM2 (single process)
 CMD ["pm2-runtime", "start", "npm", "--", "start"]

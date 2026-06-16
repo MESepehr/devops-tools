@@ -1,6 +1,6 @@
 services:
   postgres:
-    build: .
+    image: postgres:16
     container_name: pg_server
     ports:
       - "5432:5432"
@@ -11,6 +11,7 @@ services:
     volumes:
       - ./pg_data:/var/lib/postgresql/data
       - ./custom-postgres.conf:/etc/postgresql/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
     restart: unless-stopped
     env_file:
       - .env

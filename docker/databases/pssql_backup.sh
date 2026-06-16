@@ -1,28 +1,20 @@
 #!/bin/bash
+set -euo pipefail
 
-#Load .env file
-source ./.env
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$DIR/.env"
 
-# Configuration
-DB_USER=penpot_admin           # Default PostgreSQL user
-DB_NAME=penpot # Replace with your database name
+DB_USER=${DB_USER:-${PG_USER:-postgres}}
+DB_NAME=${DB_NAME:-${PG_DB:-postgres}}
+CONTAINER_NAME=${CONTAINER_NAME:-pg_server}
+BACKUP_DIR=${BACKUP_DIR:-"$DIR/backups"}
 
-
-BACKUP_DIR="/home/backups"       # Directory to save backups
+mkdir -p "$BACKUP_DIR"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 FILENAME="${BACKUP_DIR}/${DB_NAME}_backup_${TIMESTAMP}.sql.gz"
 
-
 echo "Starting backup for database: $DB_NAME for $DB_USER"
 
-CONTAINER_NAME="postgres_container"
-# Run pg_dump inside the docker container
 docker exec "$CONTAINER_NAME" pg_dump -U "$DB_USER" "$DB_NAME" | gzip > "$FILENAME"
 
-# Check if the backup was successful
-if [ $? -eq 0 ]; then
-    echo "Backup successful! File saved to: $FILENAME"
-else
-    echo "Backup failed!"
-    exit 1
-fi
+echo "Backup successful! File saved to: $FILENAME"

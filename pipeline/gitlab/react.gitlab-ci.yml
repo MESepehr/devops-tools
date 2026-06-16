@@ -19,10 +19,9 @@ build_react_app:
     - echo "Switch to Iran mirror for npm"
     # - npm config set registry https://mirror-npm.runflare.com
     - echo "Installing project dependencies..."
-    - rm ./package-lock.json
-    - npm install --legacy-peer-deps
+    - if [ -f package-lock.json ]; then npm ci --legacy-peer-deps; else npm install --legacy-peer-deps; fi
     - echo "Building the React application..."
-    - cp "$ENV_FILE_" .env
+    - if [ -f "$ENV_FILE_" ]; then cp "$ENV_FILE_" .env; fi
     - CI=false npm run build
     - echo "Build artifacts are ready in the '${BUILD_DIR_}' directory."
   artifacts:
@@ -32,6 +31,7 @@ build_react_app:
   cache:
     key:
       files:
+        - package-lock.json
         - package.json
     paths:
       - node_modules/

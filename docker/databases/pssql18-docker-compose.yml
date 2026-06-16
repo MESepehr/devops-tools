@@ -1,6 +1,8 @@
 services:
   postgres:
-    build: DockerfilePSQL18
+    build:
+      context: .
+      dockerfile: DockerfilePSQL18
     container_name: pg_server18
     ports:
       - "5433:5432"
@@ -9,9 +11,9 @@ services:
       - POSTGRES_PASSWORD=${PG_PASS}
       - POSTGRES_DB=${PG_DB}
     volumes:
-      # Change this line - mount parent directory instead
-      - ./pg_data:/var/lib/postgresql
+      - ./pg_data:/var/lib/postgresql/data
       - ./custom-postgres.conf:/etc/postgresql/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
     restart: unless-stopped
     env_file:
       - .env

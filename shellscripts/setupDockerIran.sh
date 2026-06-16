@@ -1,6 +1,9 @@
 #!/bin/bash
+set -euo pipefail
+
 apt update
 apt install -y docker.io
+mkdir -p /etc/docker
 echo '{
   "insecure-registries" : ["https://docker.arvancloud.ir"],
   "registry-mirrors": ["https://docker.arvancloud.ir"]

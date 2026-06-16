@@ -32,7 +32,7 @@ variables:
       fi
       if [ -z "$EXPOSE_PORT" ]; then
         echo "EXPOSE_PORT_ variable shouldn't be empty!"
-        error 1
+        exit 1
       fi
     - cd $SRC_DIRECTORY_
     # - echo "Force Dockerfile to user runflare mirrors"
@@ -187,4 +187,3 @@ variables:
 #     SERVER_USER_: $SERVER_USER_CODEKIT  
 #     SERVER_PATH_: $SERVER_PATH_TOPATR # like ./shop
 #     BRANCH: topatr
-
