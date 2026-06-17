@@ -1,7 +1,7 @@
 FROM ubuntu:22.04 AS my_runner
 
-RUN sed -i 's/archive.ubuntu.com/linux-mirror.liara.ir\/repository/g' /etc/apt/sources.list
-RUN sed -i 's/security.ubuntu.com/linux-mirror.liara.ir\/repository/g' /etc/apt/sources.list
+# RUN sed -i 's/archive.ubuntu.com/linux-mirror.liara.ir\/repository/g' /etc/apt/sources.list
+# RUN sed -i 's/security.ubuntu.com/linux-mirror.liara.ir\/repository/g' /etc/apt/sources.list
 
 RUN apt update
 RUN apt upgrade -y
