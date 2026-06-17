@@ -42,6 +42,13 @@ Install Docker and the Docker Compose plugin:
 curl -sf https://git.ngtartanak.co.ir/codekit/devops-tools/-/raw/main/shellscripts/setupDockerIran.sh | bash
 ```
 
+
+SetUp gitlab runner on a server:
+
+```bash
+curl -sf https://git.ngtartanak.co.ir/codekit/devops-tools/-/raw/main/shellscripts/setupGitlabRunnerImage.sh | bash
+```
+
 Note: these scripts modify apt and Docker configuration files and should be run with root privileges. The Ubuntu mirror script creates backups before changing apt source files.
 
 ## Docker
