@@ -20,8 +20,6 @@ variables:
     ENV_FILE_:
     ENV_FILE_NAME_: .env
     DOTNET: false
-  tags:
-    - shell
   stage: build
   rules:
     - if: '( ( $CI_COMMIT_TAG =~ $GIT_TAG && $GIT_TAG != "" ) || ( $BRANCH == $CI_COMMIT_BRANCH && $BRANCH != "" ) )'
@@ -98,8 +96,6 @@ variables:
     ENV_FILE_NAME_: .env
     GIT_TAG:
     BRANCH:
-  tags:
-    - shell
   stage: deploy
   rules:
     - if: '( ( $CI_COMMIT_TAG =~ $GIT_TAG && $GIT_TAG != "" ) || ( $BRANCH == $CI_COMMIT_BRANCH && $BRANCH != "" ) )'
