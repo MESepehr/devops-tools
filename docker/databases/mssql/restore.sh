@@ -51,21 +51,42 @@ if [[ "$BACKUP_PATH" != "$DEST_PATH" ]]; then
 fi
 chown 10001:10001 "$DEST_PATH"
 
-LOGICAL_NAME="$(basename "$FILE_NAME" .bak)"
-if [[ -z "$LOGICAL_NAME" ]]; then
-  echo "Error: could not derive LOGICAL_NAME from '$FILE_NAME'" >&2
-  exit 1
+# Try to discover logical file names from the backup
+echo "Inspecting backup to discover logical file names..."
+FILELIST_RAW=$(docker compose run --rm mssql-backup \
+  /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASS" \
+  -Q "RESTORE FILELISTONLY FROM DISK='/backup/$FILE_NAME'" -s "|" -W -h -1 || true)
+
+DATA_LOGICAL=""
+LOG_LOGICAL=""
+while IFS= read -r line; do
+  # skip empty lines
+  [[ -z "$line" ]] && continue
+  # each column separated by |, LogicalName is first, Type is third
+  col1=$(echo "$line" | awk -F'|' '{print $1}')
+  col3=$(echo "$line" | awk -F'|' '{print $3}')
+  case "$col3" in
+    D) DATA_LOGICAL="$col1" ;; 
+    L) LOG_LOGICAL="$col1" ;; 
+  esac
+done <<< "$FILELIST_RAW"
+
+if [[ -z "$DATA_LOGICAL" || -z "$LOG_LOGICAL" ]]; then
+  echo "Warning: could not parse logical names from backup, falling back to filename-based names." >&2
+  DATA_LOGICAL="$(basename "$FILE_NAME" .bak)"
+  LOG_LOGICAL="${DATA_LOGICAL}_log"
 fi
 
 echo "Backup file: $DEST_PATH"
 echo "Target database: $DB_NAME"
-echo "Derived logical name: $LOGICAL_NAME"
+echo "Data logical name: $DATA_LOGICAL"
+echo "Log logical name: $LOG_LOGICAL"
 
 docker compose run --rm mssql-backup \
   /opt/mssql-tools/bin/sqlcmd \
   -S localhost -U sa -P "$SA_PASS" \
   -Q "RESTORE DATABASE [$DB_NAME] \
       FROM DISK='/backup/$FILE_NAME' \
-      WITH MOVE '$LOGICAL_NAME' TO '/var/opt/mssql/data/${DB_NAME}.mdf', \
-      MOVE '${LOGICAL_NAME}_log' TO '/var/opt/mssql/data/${DB_NAME}_log.ldf', \
+      WITH MOVE '$DATA_LOGICAL' TO '/var/opt/mssql/data/${DB_NAME}.mdf', \
+      MOVE '$LOG_LOGICAL' TO '/var/opt/mssql/data/${DB_NAME}_log.ldf', \
       REPLACE, RECOVERY"
