@@ -25,6 +25,8 @@ RUN mkdir -p /etc/docker && \
 RUN usermod -aG docker gitlab-runner
 #ENV DOCKER_BUILDKIT=0
 
+RUN apt install -y wget
+
 RUN gitlab-runner start
 
 CMD ["/bin/bash", "-c", "gitlab-runner start && dockerd"]
