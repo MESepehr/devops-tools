@@ -52,6 +52,7 @@ docker compose -f "$DIR/docker-compose.yml" run --rm mssql-backup \
       TO DISK='/backup/${TARNAME}.bak' \
       WITH INIT, COMPRESSION"
 
+cp "$DIR/mssql_backup/$TARNAME.bak" "$BACKUP_DIR/$DB_NAME.bak"
 mv "$DIR/mssql_backup/$TARNAME.bak" "$BACKUP_FILE"
 
 echo "Backup completed: $BACKUP_FILE"
