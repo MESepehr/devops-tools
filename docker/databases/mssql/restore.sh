@@ -5,36 +5,59 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$DIR/.env"
 
 usage() {
-  echo "Usage: $0 <backup-file.bak> <target-db-name>"
-  echo "Example: $0 filmnab.bak Filmnab_db"
+  echo "Usage: $0 [-p backup-file.bak] [-d target-db-name]"
+  echo "Example: $0 -p export/Filmnab_db.bak -d Filmnab_db"
   exit 1
 }
 
-if [[ $# -ne 2 ]]; then
+BACKUP_PATH=""
+DB_NAME=""
+
+while getopts ":p:d:" opt; do
+  case "$opt" in
+    p) BACKUP_PATH="$OPTARG" ;; 
+    d) DB_NAME="$OPTARG" ;; 
+    *) usage ;; 
+  esac
+done
+
+if [[ -z "$BACKUP_PATH" ]]; then
+  read -rp "Enter path to backup file (.bak): " BACKUP_PATH
+fi
+if [[ -z "$DB_NAME" ]]; then
+  read -rp "Enter target database name: " DB_NAME
+fi
+
+if [[ -z "$BACKUP_PATH" || -z "$DB_NAME" ]]; then
   usage
 fi
 
-FILE_NAME="$1"
-DB_NAME="$2"
+if [[ ! -f "$BACKUP_PATH" ]]; then
+  echo "Error: backup file '$BACKUP_PATH' does not exist." >&2
+  exit 1
+fi
 
-if [[ "${FILE_NAME##*.}" != "bak" ]]; then
+if [[ "${BACKUP_PATH##*.}" != "bak" ]]; then
   echo "Error: backup file must end with .bak" >&2
-  usage
+  exit 1
 fi
+
+mkdir -p "$DIR/mssql_backup"
+FILE_NAME="$(basename "$BACKUP_PATH")"
+DEST_PATH="$DIR/mssql_backup/$FILE_NAME"
+
+if [[ "$BACKUP_PATH" != "$DEST_PATH" ]]; then
+  cp "$BACKUP_PATH" "$DEST_PATH"
+fi
+chown 10001:10001 "$DEST_PATH"
 
 LOGICAL_NAME="$(basename "$FILE_NAME" .bak)"
-
 if [[ -z "$LOGICAL_NAME" ]]; then
   echo "Error: could not derive LOGICAL_NAME from '$FILE_NAME'" >&2
   exit 1
 fi
 
-if [[ -z "$DB_NAME" ]]; then
-  echo "Error: target database name is required" >&2
-  usage
-fi
-
-echo "Backup file: $FILE_NAME"
+echo "Backup file: $DEST_PATH"
 echo "Target database: $DB_NAME"
 echo "Derived logical name: $LOGICAL_NAME"
 
