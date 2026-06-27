@@ -1,0 +1,15 @@
+services:
+  dozzle:
+    image: amir20/dozzle:latest
+    command: --auth-provider simple
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./dozzle_data:/data
+      - ./users.yml:/data/users.yml:ro
+    ports:
+      - 8070:8080
+#    networks:
+#      - dozzle
+    deploy:
+      mode: global
