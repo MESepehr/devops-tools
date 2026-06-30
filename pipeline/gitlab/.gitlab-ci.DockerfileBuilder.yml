@@ -10,19 +10,21 @@ variables:
 ## Build image part
 .build_docker_image:
   variables:
-    IMAGE_TAG_: toorball_eshop
+    IMAGE_TAG_: latest
     DOCKERFILE_NAME_: DockerfileEshop
     IMAGE_NAME_PATTERN:
     EXPOSE_PORT_PATTERN:
     EXPOSE_PORT:
     BRANCH:
-    GIT_TAG:
+    GIT_TAG: #/^project-a.*/ should use in regex model
     ENV_FILE_:
     ENV_FILE_NAME_: .env
     DOTNET: false
   stage: build
+  retry:
+    max: 2
   rules:
-    - if: '( ( $CI_COMMIT_TAG =~ $GIT_TAG && $GIT_TAG != "" ) || ( $BRANCH == $CI_COMMIT_BRANCH && $BRANCH != "" ) )'
+    - if: '( ( $CI_COMMIT_TAG =~ $GIT_TAG && $GIT_TAG != "" && $CI_COMMIT_TAG ) || ( $GIT_TAG == "" && $BRANCH == $CI_COMMIT_BRANCH && $BRANCH != "" && $CI_COMMIT_BRANCH ) )'
   script:
     - |
       if [ "$CI_COMMIT_TAG" != "" ]; then
@@ -31,6 +33,15 @@ variables:
       if [ -z "$EXPOSE_PORT" ]; then
         echo "EXPOSE_PORT_ variable shouldn't be empty!"
         exit 1
+      fi
+      if [ "$CI_COMMIT_REF_PROTECTED" != "true" ]; then
+        echo "You should run the command on protected branches only."
+        exit 1
+      fi
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        IMAGE_TAG="$CI_COMMIT_TAG"
+      elif [ -n "$GIT_TAG" ]; then
+        IMAGE_TAG="$GIT_TAG"
       fi
     - cd $SRC_DIRECTORY_
     # - echo "Force Dockerfile to user runflare mirrors"
@@ -105,7 +116,7 @@ variables:
       - runner_system_failure
       # - stuck_or_timeout_failure
   rules:
-    - if: '( ( $CI_COMMIT_TAG =~ $GIT_TAG && $GIT_TAG != "" ) || ( $BRANCH == $CI_COMMIT_BRANCH && $BRANCH != "" ) )'
+    - if: '( ( $CI_COMMIT_TAG =~ $GIT_TAG && $GIT_TAG != "" && $CI_COMMIT_TAG ) || ( $GIT_TAG == "" && $BRANCH == $CI_COMMIT_BRANCH && $BRANCH != "" && $CI_COMMIT_BRANCH ) )'
   script:
     - cd $SRC_DIRECTORY_
     # - echo "Copy .env file"
