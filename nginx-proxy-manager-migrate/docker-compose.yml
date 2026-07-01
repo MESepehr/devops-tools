@@ -7,6 +7,7 @@ services:
     network_mode: "host"
     volumes:
       - /etc/nginx/sites-enabled:/etc/nginx/sites-enabled:ro
+      - /etc/nginx/sites-available:/etc/nginx/sites-available:ro
       - ./npm-migrate.py:/app/npm-migrate.py:ro
     working_dir: /app
     command: sh -c "pip install --no-cache-dir requests && python npm-migrate.py"
