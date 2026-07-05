@@ -56,6 +56,21 @@ variables:
       elif [ -n "$GIT_TAG" ]; then
         IMAGE_TAG="$GIT_TAG"
       fi
+    - |
+      export GIT_CLONE_PATH=$( pwd )
+      if [ -f "$GIT_CLONE_PATH/docker-compose.yml" ]; then
+        export DOCKER_COMPOSE_FILE=$GIT_CLONE_PATH/docker-compose.yml
+      elif [ -f "$GIT_CLONE_PATH/docker-compose.yaml" ]; then
+        export DOCKER_COMPOSE_FILE=$GIT_CLONE_PATH/docker-compose.yaml
+      elif [ -f "$GIT_CLONE_PATH/compose/docker-compose.yaml" ]; then
+        export DOCKER_COMPOSE_FILE=$GIT_CLONE_PATH/compose/docker-compose.yaml
+      elif [ -f "$GIT_CLONE_PATH/compose/docker-compose.yml" ]; then
+        export DOCKER_COMPOSE_FILE=$GIT_CLONE_PATH/compose/docker-compose.yml
+      else
+        export DOCKER_COMPOSE_FILE=./docker-compose.yml
+      fi
+      echo "docker-compose file is here: $DOCKER_COMPOSE_FILE"
+
     - cd $SRC_DIRECTORY_
     # - echo "Force Dockerfile to user runflare mirrors"
     # - sed -i 's|RUN npm install|RUN npm install --registry="https://package-mirror.liara.ir/repository/npm/"|' Dockerfile
@@ -98,8 +113,9 @@ variables:
 
     ## Make docker-compose ready and export to server
     - echo "Make docker-compose ready and export to server"
-    - sed -i "s|${IMAGE_NAME_PATTERN}|${IMAGE_NAME_}:${IMAGE_TAG_}|" ./docker-compose.yml
-    - sed -i "s|${EXPOSE_PORT_PATTERN}|${EXPOSE_PORT}|g" ./docker-compose.yml
+    - sed -i "s|${IMAGE_NAME_PATTERN}|${IMAGE_NAME_}:${IMAGE_TAG_}|" $DOCKER_COMPOSE_FILE
+    - sed -i "s|${EXPOSE_PORT_PATTERN}|${EXPOSE_PORT}|g" $DOCKER_COMPOSE_FILE
+    - cp $DOCKER_COMPOSE_FILE ./docker-compose.yml
   artifacts:
     paths:
       - $SRC_DIRECTORY_/docker-compose.yml
