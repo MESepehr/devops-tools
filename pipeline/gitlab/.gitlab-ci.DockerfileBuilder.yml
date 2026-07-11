@@ -115,7 +115,10 @@ variables:
     - echo "Make docker-compose ready and export to server"
     - sed -i "s|${IMAGE_NAME_PATTERN}|${IMAGE_NAME_}:${IMAGE_TAG_}|" $DOCKER_COMPOSE_FILE
     - sed -i "s|${EXPOSE_PORT_PATTERN}|${EXPOSE_PORT}|g" $DOCKER_COMPOSE_FILE
-    - cp $DOCKER_COMPOSE_FILE ./docker-compose.yml
+    - |
+      if ! cmp -s "$DOCKER_COMPOSE_FILE" ./docker-compose.yml 2>/dev/null; then
+        cp "$DOCKER_COMPOSE_FILE" ./docker-compose.yml
+      fi
   artifacts:
     paths:
       - $SRC_DIRECTORY_/docker-compose.yml
