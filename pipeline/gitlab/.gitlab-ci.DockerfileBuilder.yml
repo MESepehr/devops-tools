@@ -75,10 +75,15 @@ variables:
     # - echo "Force Dockerfile to user runflare mirrors"
     # - sed -i 's|RUN npm install|RUN npm install --registry="https://package-mirror.liara.ir/repository/npm/"|' Dockerfile
     # - sed -i 's|RUN pip install|RUN pip install -i https://mirror-pypi.runflare.com/simple|' Dockerfile
-    - echo "Copy $ENV_FILE_NAME_ file"
     - |
-      if [ -f "$ENV_FILE_" ]; then
-        cp $ENV_FILE_ $ENV_FILE_NAME_
+      if [ -n "$ENV_FILE_" ]; then
+        echo "Copy $ENV_FILE_NAME_ file"
+        if [ -f "$ENV_FILE_" ]; then
+          cp $ENV_FILE_ $ENV_FILE_NAME_
+        else
+          echo "The ENV file that you created is not FILE !!"
+          exit 2
+        fi
       fi
 
     # Microsoft bypass part...
