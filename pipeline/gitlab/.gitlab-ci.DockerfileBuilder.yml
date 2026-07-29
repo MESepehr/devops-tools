@@ -188,6 +188,7 @@ variables:
             cd ${SERVER_PATH_}
             echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
             docker compose -f new.docker-compose.yml pull
+            cp docker-compose.yml back."$GIT_TAG".docker-compose.yml
             docker compose down || true
             mv new.docker-compose.yml docker-compose.yml
             docker compose up -d
