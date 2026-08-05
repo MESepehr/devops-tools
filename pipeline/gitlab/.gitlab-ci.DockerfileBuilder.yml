@@ -38,6 +38,16 @@ variables:
           export EXPOSE_PORT=$EXPOSE_PORT_
         fi
       fi
+
+      if [ -z "$IMAGE_NAME_PATTERN" ]; then
+        if [ -z "$IMAGE_NAME_PATTERN_" ]; then
+          echo "IMAGE_NAME_PATTERN variable shouldn't be empty!"
+          exit 1
+        else
+          export IMAGE_NAME_PATTERN=$IMAGE_NAME_PATTERN_
+        fi
+      fi
+      
       if [ "$CI_COMMIT_REF_PROTECTED" != "true" ]; then
         echo "You should run the command on protected branches only."
         exit 1
