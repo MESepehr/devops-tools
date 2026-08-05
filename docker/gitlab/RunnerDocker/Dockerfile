@@ -6,7 +6,7 @@ FROM ubuntu:22.04 AS my_runner
 RUN apt update
 RUN apt upgrade -y
 
-RUN apt install -y curl docker.io
+RUN apt install -y curl docker.io wget
 
 RUN curl https://codekit.s3.ir-thr-at1.arvanstorage.ir/gitlab-runner-linux-amd64 -o /usr/local/bin/gitlab-runner
 RUN chmod +x /usr/local/bin/gitlab-runner
@@ -14,6 +14,8 @@ RUN useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/b
 RUN gitlab-runner install --user=gitlab-runner --working-directory=/home/gitlab-runner
 RUN apt install -y rsync
 # Docker part
+RUN wget https://codekit.s3.ir-thr-at1.arvanstorage.ir/gitlab-runner-helper:x86_64-v18.8.0.tar
+RUN docker image load -i gitlab-runner-helper\:x86_64-v18.8.0.tar
 #RUN apt install -y fuse-overlayfs
 RUN mkdir -p /etc/docker && \
   echo '{\n\
@@ -24,8 +26,6 @@ RUN mkdir -p /etc/docker && \
 }' > /etc/docker/daemon.json
 RUN usermod -aG docker gitlab-runner
 #ENV DOCKER_BUILDKIT=0
-
-RUN apt install -y wget
 
 RUN gitlab-runner start
 
