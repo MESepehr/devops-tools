@@ -166,6 +166,7 @@ variables:
     SERVER_USER_:
     SERVER_PATH_:
     ENV_FILE_NAME_: .env
+    ENV_FILE_:
     GIT_TAG:
     BRANCH:
   stage: deploy
@@ -199,6 +200,15 @@ variables:
         scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp ./docker-compose.yml $SERVER_USER_@$SERVER_IP_:$SERVER_PATH_/new.docker-compose.yml
       fi
     - |
+      if [ -n "$ENV_FILE_" ]; then
+        echo "Copy $ENV_FILE_NAME_ file"
+        if [ -f "$ENV_FILE_" ]; then
+          cp $ENV_FILE_ $ENV_FILE_NAME_
+        else
+          echo "The ENV file that you created is not FILE !!"
+          exit 2
+        fi
+      fi
       if [ -f "./$ENV_FILE_NAME_" ] ; then
         scp -P $SSH_PORT_ -o IdentityFile=~/.ssh/id_edtemp ./$ENV_FILE_NAME_ $SERVER_USER_@$SERVER_IP_:$SERVER_PATH_/$ENV_FILE_NAME_
       fi
