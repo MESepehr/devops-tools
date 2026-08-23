@@ -19,6 +19,7 @@ variables:
     GIT_TAG: #/^project-a.*/ should use in regex model
     ENV_FILE_:
     ENV_FILE_NAME_: .env
+    DOCKER_COMPOSE_FILE_NAME_: docker-compose.yml
     DOTNET: false
   stage: build
   retry:
@@ -81,7 +82,9 @@ variables:
       fi
     - |
       export GIT_CLONE_PATH=$( pwd )
-      if [ -f "$GIT_CLONE_PATH/docker-compose.yml" ]; then
+      if [ -n "$DOCKER_COMPOSE_FILE_NAME_" ] && [ -f "$GIT_CLONE_PATH/$SRC_DIRECTORY_/$DOCKER_COMPOSE_FILE_NAME_" ]; then
+        export DOCKER_COMPOSE_FILE=$GIT_CLONE_PATH/$SRC_DIRECTORY_/$DOCKER_COMPOSE_FILE_NAME_
+      elif [ -f "$GIT_CLONE_PATH/docker-compose.yml" ]; then
         export DOCKER_COMPOSE_FILE=$GIT_CLONE_PATH/docker-compose.yml
       elif [ -f "$GIT_CLONE_PATH/docker-compose.yaml" ]; then
         export DOCKER_COMPOSE_FILE=$GIT_CLONE_PATH/docker-compose.yaml
