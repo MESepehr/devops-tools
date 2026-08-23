@@ -1,5 +1,6 @@
 include:
 #  - local: '.gitlab-ci.DockerfileBuilder.yml'
+#  - remote: 'https://gitlab.sepehrino.com/configs/devops-tools/-/raw/main/pipeline/gitlab/.gitlab-ci.DockerfileBuilder.yml'
   - remote: 'https://git.ngtartanak.co.ir/codekit/devops-tools/-/raw/main/pipeline/gitlab/.gitlab-ci.DockerfileBuilder.yml'
 
 ##Global variables
