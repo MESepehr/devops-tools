@@ -79,7 +79,7 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
     read -rsp "S3 secret key: " S3_SECRET_KEY
     echo
 
-    read -rp "Mount point [/mnt/backup]: " MOUNT_POINT
+    read -ep "Mount point [/mnt/backup]: " MOUNT_POINT
     MOUNT_POINT="${MOUNT_POINT:-/mnt/backup}"
 
 
