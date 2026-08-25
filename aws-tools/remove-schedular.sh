@@ -197,6 +197,11 @@ echo
 DELETED_COUNT=0
 KEPT_COUNT=0
 
+# Each entry represents an interval before KEEP_UNTIL for which a file has
+# already been retained. Indexed arrays work with the Bash version shipped
+# with macOS as well as newer Bash versions.
+KEPT_SLOTS=()
+
 
 # --------------------------------------------------
 # Process files
@@ -227,22 +232,29 @@ while IFS= read -r -d '' FILE; do
     # Old files
     # --------------------------------------------------
 
-    AGE_SECONDS=$((NOW - FILE_TIME))
-
-    SLOT=$((AGE_SECONDS / INTERVAL_SECONDS))
-
-    REMAINDER=$((AGE_SECONDS % INTERVAL_SECONDS))
-
-
     # --------------------------------------------------
     # Keep one file for each interval
     #
-    # The oldest/closest file to the interval boundary
-    # is kept. Other files in the same interval are
-    # deleted.
+    # Intervals are calculated backwards from KEEP_UNTIL,
+    # rather than from the current time. For example, with
+    # KEEP_DAYS=30 and RETENTION_INTERVAL=7, the first slot
+    # contains files 31 through 37 days old, the second 38
+    # through 44 days old, and so on. Only the first file found in each slot is
+    # retained; all other files in that same slot are deleted.
     # --------------------------------------------------
 
-    if [[ "$REMAINDER" -lt 3600 ]]; then
+    SLOT=$(( (KEEP_UNTIL - FILE_TIME - 1) / INTERVAL_SECONDS ))
+    SLOT_ALREADY_KEPT=false
+
+    for KEPT_SLOT in "${KEPT_SLOTS[@]}"; do
+        if [[ "$KEPT_SLOT" -eq "$SLOT" ]]; then
+            SLOT_ALREADY_KEPT=true
+            break
+        fi
+    done
+
+    if [[ "$SLOT_ALREADY_KEPT" == false ]]; then
+        KEPT_SLOTS+=("$SLOT")
         KEPT_COUNT=$((KEPT_COUNT + 1))
         continue
     fi
