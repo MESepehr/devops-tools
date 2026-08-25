@@ -3,7 +3,8 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_FILE="$SCRIPT_DIR/.backup-retention.conf"
+CONFIG_FILE="$SCRIPT_DIR/.remover-retention.conf"
+
 
 # --------------------------------------------------
 # Setup
@@ -74,19 +75,19 @@ fi
 
 if [[ ! -f "$CONFIG_FILE" ]]; then
 
-    echo "Backup retention configuration"
+    echo "Remover retention configuration"
     echo
 
-    read -ep "Backup folder: " BACKUP_DIR
+    read -ep "Target folder: " TARGET_DIR
 
-    if [[ -z "$BACKUP_DIR" ]]; then
-        echo "Backup folder is required."
+    if [[ -z "$TARGET_DIR" ]]; then
+        echo "Target folder is required."
         exit 1
     fi
 
-    if [[ ! -d "$BACKUP_DIR" ]]; then
+    if [[ ! -d "$TARGET_DIR" ]]; then
         echo "Folder does not exist:"
-        echo "$BACKUP_DIR"
+        echo "$TARGET_DIR"
         exit 1
     fi
 
@@ -114,7 +115,7 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
     # --------------------------------------------------
 
     cat > "$CONFIG_FILE" <<EOF
-BACKUP_DIR="$BACKUP_DIR"
+TARGET_DIR="$TARGET_DIR"
 KEEP_DAYS="$KEEP_DAYS"
 RETENTION_INTERVAL="$RETENTION_INTERVAL"
 EOF
@@ -137,8 +138,8 @@ source "$CONFIG_FILE"
 # Validate configuration
 # --------------------------------------------------
 
-if [[ -z "$BACKUP_DIR" ]]; then
-    echo "Backup folder is not configured."
+if [[ -z "$TARGET_DIR" ]]; then
+    echo "Target folder is not configured."
     exit 1
 fi
 
@@ -152,9 +153,9 @@ if [[ -z "$RETENTION_INTERVAL" ]]; then
     exit 1
 fi
 
-if [[ ! -d "$BACKUP_DIR" ]]; then
-    echo "Backup folder does not exist:"
-    echo "$BACKUP_DIR"
+if [[ ! -d "$TARGET_DIR" ]]; then
+    echo "Target folder does not exist:"
+    echo "$TARGET_DIR"
     exit 1
 fi
 
@@ -186,9 +187,9 @@ KEEP_UNTIL=$((NOW - KEEP_SECONDS))
 # Cleanup
 # --------------------------------------------------
 
-echo "Backup retention cleanup"
+echo "Cleaner retention cleanup"
 echo
-echo "Backup folder: $BACKUP_DIR"
+echo "Target folder: $TARGET_DIR"
 echo "Keep all files newer than: $KEEP_DAYS days"
 echo "Older file interval: every $RETENTION_INTERVAL days"
 echo
@@ -264,7 +265,7 @@ while IFS= read -r -d '' FILE; do
     DELETED_COUNT=$((DELETED_COUNT + 1))
 
 done < <(
-    find "$BACKUP_DIR" \
+    find "$TARGET_DIR" \
         -type f \
         -print0
 )
