@@ -15,17 +15,17 @@ if [[ "$1" == "--setup" ]]; then
 
     if command -v apt-get >/dev/null 2>&1; then
         apt-get update
-        apt-get install -y s3fs awscli rsync
+        apt-get install -y s3fs awscli
 
     elif command -v dnf >/dev/null 2>&1; then
-        dnf install -y s3fs awscli rsync
+        dnf install -y s3fs awscli
 
     elif command -v yum >/dev/null 2>&1; then
-        yum install -y s3fs awscli rsync
+        yum install -y s3fs awscli
 
     else
         echo "Unsupported package manager."
-        echo "Install s3fs, awscli and rsync manually."
+        echo "Install s3fs and awscli manually."
         exit 1
     fi
 
@@ -52,13 +52,11 @@ fi
 # Check dependencies
 # --------------------------------------------------
 
-for command in s3fs rsync; do
-    if ! command -v "$command" >/dev/null 2>&1; then
-        echo "$command is not installed."
-        echo "Run: $0 --setup"
-        exit 1
-    fi
-done
+if ! command -v s3fs >/dev/null 2>&1; then
+    echo "s3fs is not installed."
+    echo "Run: $0 --setup"
+    exit 1
+fi
 
 
 # --------------------------------------------------
@@ -80,22 +78,13 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
     read -rsp "S3 secret key: " S3_SECRET_KEY
     echo
 
-    read -rp "Local folder to backup: " SOURCE_DIR
-
     read -rp "Mount point [/mnt/backup]: " MOUNT_POINT
     MOUNT_POINT="${MOUNT_POINT:-/mnt/backup}"
 
-    # Validate source folder
-    if [[ ! -d "$SOURCE_DIR" ]]; then
-        echo "Source folder does not exist:"
-        echo "$SOURCE_DIR"
-        exit 1
-    fi
-
-    # Create mount point
+    # Create mount point if it does not exist
     mkdir -p "$MOUNT_POINT"
 
-    # Save S3 credentials
+    # Save credentials
     cat > "$PASSWD_FILE" <<EOF
 $S3_ACCESS_KEY:$S3_SECRET_KEY
 EOF
@@ -106,7 +95,6 @@ EOF
     cat > "$CONFIG_FILE" <<EOF
 S3_BUCKET="$S3_BUCKET"
 S3_ENDPOINT="$S3_ENDPOINT"
-SOURCE_DIR="$SOURCE_DIR"
 MOUNT_POINT="$MOUNT_POINT"
 PASSWD_FILE="$PASSWD_FILE"
 EOF
@@ -135,44 +123,45 @@ if [[ ! -f "$PASSWD_FILE" ]]; then
     exit 1
 fi
 
-if [[ ! -d "$SOURCE_DIR" ]]; then
-    echo "Source folder does not exist:"
-    echo "$SOURCE_DIR"
+if [[ ! -d "$MOUNT_POINT" ]]; then
+    echo "Mount point does not exist:"
+    echo "$MOUNT_POINT"
     exit 1
 fi
 
-mkdir -p "$MOUNT_POINT"
+
+# --------------------------------------------------
+# Check if already mounted
+# --------------------------------------------------
+
+if mountpoint -q "$MOUNT_POINT"; then
+    echo "Bucket is already mounted."
+    exit 0
+fi
+
+
+# --------------------------------------------------
+# Check mount point
+# --------------------------------------------------
+
+if [[ -n "$(ls -A "$MOUNT_POINT" 2>/dev/null)" ]]; then
+    echo "Mount point is not empty:"
+    echo "$MOUNT_POINT"
+    echo "Bucket was not mounted."
+    exit 1
+fi
 
 
 # --------------------------------------------------
 # Mount bucket
 # --------------------------------------------------
 
-if mountpoint -q "$MOUNT_POINT"; then
-    echo "Bucket is already mounted."
-else
-    echo "Mounting bucket..."
+echo "Mounting bucket..."
 
-    s3fs "$S3_BUCKET" "$MOUNT_POINT" \
-        -o passwd_file="$PASSWD_FILE" \
-        -o allow_other \
-        -o url="$S3_ENDPOINT" \
-        -o use_path_request_style \
-        -o nonempty
+s3fs "$S3_BUCKET" "$MOUNT_POINT" \
+    -o passwd_file="$PASSWD_FILE" \
+    -o allow_other \
+    -o url="$S3_ENDPOINT" \
+    -o use_path_request_style
 
-    echo "Bucket mounted."
-fi
-
-
-# --------------------------------------------------
-# Sync
-# --------------------------------------------------
-
-echo "Syncing files..."
-
-rsync -av \
-    --ignore-existing \
-    "$SOURCE_DIR"/ \
-    "$MOUNT_POINT"/
-
-echo "Sync completed."
+echo "Bucket mounted successfully."
