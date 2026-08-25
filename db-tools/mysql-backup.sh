@@ -48,9 +48,6 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
     read -rp "Backup directory [/mnt/backup]: " dir
     dir=${dir:-/mnt/backup}
 
-    read -rp "Maximum backups [180]: " max
-    max=${max:-180}
-
     # Save configuration
     cat > "$CONFIG_FILE" <<EOF
 db="$db"
@@ -59,7 +56,6 @@ db_password="$db_password"
 db_type="$db_type"
 container_name="$container_name"
 dir="$dir"
-max="$max"
 EOF
 
     chmod 600 "$CONFIG_FILE"
@@ -212,20 +208,6 @@ TEMP_TAR=""
 
 echo "Syncing files..."
 sync
-
-
-# Remove old backups
-echo "Removing old backups..."
-
-mapfile -t old_files < <(
-    ls -1t "$dir"/mysql_backup_"$db"_*.tar.gz 2>/dev/null \
-    | tail -n +"$((max + 1))"
-)
-
-for old_file in "${old_files[@]}"; do
-    echo "Removing: $(basename "$old_file")"
-    rm -f -- "$old_file"
-done
 
 
 echo "========================================"

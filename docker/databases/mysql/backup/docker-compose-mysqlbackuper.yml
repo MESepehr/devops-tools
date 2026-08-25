@@ -1,0 +1,51 @@
+services:
+  mysql-backup:
+    image: mysql:8.0
+    restart: "no"
+
+    # These values can be overridden with environment variables or a .env file.
+    environment:
+      MYSQL_HOST: ${MYSQL_HOST:-host.docker.internal}
+      MYSQL_PORT: ${MYSQL_PORT:-3306}
+      MYSQL_USER: ${MYSQL_USER:-root}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-}
+
+    # Makes host.docker.internal work on Linux as well as Docker Desktop.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    volumes:
+      - ./data:/backup
+
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        timestamp="$$(date -u +%Y%m%dT%H%M%SZ)"
+
+        if [ -n "$${MYSQL_DATABASE}" ]; then
+          safe_database="$$(printf '%s' "$${MYSQL_DATABASE}" | tr -c 'A-Za-z0-9_.-' '_')"
+          output="/backup/$${safe_database}_$${timestamp}.sql"
+          database_mode="database"
+        else
+          output="/backup/all-databases_$${timestamp}.sql"
+          database_mode="all"
+        fi
+
+        temporary="$${output}.tmp"
+        trap 'rm -f "$${temporary}"' EXIT
+
+        echo "Creating MySQL backup: $${output}"
+        dump_args="--host=$${MYSQL_HOST} --port=$${MYSQL_PORT} --user=$${MYSQL_USER} --single-transaction --quick --routines --events --triggers --set-gtid-purged=OFF"
+
+        if [ "$${database_mode}" = "database" ]; then
+          MYSQL_PWD="$${MYSQL_PASSWORD}" mysqldump $${dump_args} \
+            --databases "$${MYSQL_DATABASE}" > "$${temporary}"
+        else
+          MYSQL_PWD="$${MYSQL_PASSWORD}" mysqldump $${dump_args} \
+            --all-databases > "$${temporary}"
+        fi
+
+        mv "$${temporary}" "$${output}"
+        trap - EXIT
+        echo "Backup completed: $${output}"
