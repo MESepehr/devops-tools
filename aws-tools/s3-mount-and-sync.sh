@@ -40,6 +40,17 @@ fi
 # --------------------------------------------------
 
 if [[ "$1" == "--reset" ]]; then
+    # Load the previous mount point before removing the configuration.
+    if [[ -f "$CONFIG_FILE" ]]; then
+        source "$CONFIG_FILE"
+
+        if [[ -n "${MOUNT_POINT:-}" ]] && mountpoint -q "$MOUNT_POINT"; then
+            echo "Unmounting bucket from: $MOUNT_POINT"
+            umount "$MOUNT_POINT"
+            echo "Bucket unmounted successfully."
+        fi
+    fi
+
     rm -f "$CONFIG_FILE"
     rm -f "$PASSWD_FILE"
 
