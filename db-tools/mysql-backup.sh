@@ -45,7 +45,7 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
         db_type="1"
     fi
 
-    read -rp "Backup directory [/mnt/backup]: " dir
+    read -ep "Backup directory [/mnt/backup]: " dir
     dir=${dir:-/mnt/backup}
 
     # Save configuration
