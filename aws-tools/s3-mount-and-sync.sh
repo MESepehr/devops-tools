@@ -3,7 +3,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_FILE="$SCRIPT_DIR/.backup.conf"
+CONFIG_FILE="$SCRIPT_DIR/.bucket.conf"
 PASSWD_FILE="$SCRIPT_DIR/.s3fs-passwd"
 
 
