@@ -92,7 +92,7 @@ variables:
         export DOCKER_COMPOSE_FILE=$GIT_CLONE_PATH/compose/docker-compose.yaml
       elif [ -f "$GIT_CLONE_PATH/compose/docker-compose.yml" ]; then
         export DOCKER_COMPOSE_FILE=$GIT_CLONE_PATH/compose/docker-compose.yml
-      elif [ -f "$SRC_DIRECTORY_/docker-compose.yml"]; then
+      elif [ -f "$SRC_DIRECTORY_/docker-compose.yml" ]; then
         export DOCKER_COMPOSE_FILE=$SRC_DIRECTORY_/docker-compose.yml
       else
         echo "docker-compose.yml is not here."
