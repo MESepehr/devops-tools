@@ -21,6 +21,10 @@ variables:
     ENV_FILE_NAME_: .env
     DOCKER_COMPOSE_FILE_NAME_: docker-compose.yml
     DOTNET: false
+    # BEGIN shared proxy network variables
+    USE_SHARED_PROXY_NETWORK: "false"
+    PROXY_ALIAS:
+    # END shared proxy network variables
   stage: build
   retry:
     max: 2
@@ -149,6 +153,55 @@ variables:
     - echo "Make docker-compose ready and export to server"
     - sed -i "s|${IMAGE_NAME_PATTERN}|${IMAGE_NAME_}:${IMAGE_TAG_}|" $DOCKER_COMPOSE_FILE
     - sed -i "s|${EXPOSE_PORT_PATTERN}|${EXPOSE_PORT}|g" $DOCKER_COMPOSE_FILE
+    # BEGIN shared proxy network compose patch
+    - |
+      if [ "$USE_SHARED_PROXY_NETWORK" = "true" ]; then
+        if [ -z "$PROXY_ALIAS" ]; then
+          echo "PROXY_ALIAS must be set when USE_SHARED_PROXY_NETWORK=true"
+          exit 1
+        fi
+        case "$PROXY_ALIAS" in
+          *[!a-zA-Z0-9_.-]*)
+            echo "PROXY_ALIAS may contain only letters, digits, dots, underscores, and hyphens"
+            exit 1
+            ;;
+        esac
+
+        PROXY_COMPOSE_TEMP=$(mktemp "${DOCKER_COMPOSE_FILE}.proxy.XXXXXX") || exit 1
+        if awk -v alias="$PROXY_ALIAS" '
+          BEGIN {
+            marker = "    # env_file:"
+            network_block = "    networks:\n      default:\n      proxy:\n        aliases:\n          - \"" alias "\"\n"
+            top_networks = "\nnetworks:\n  proxy:\n    external: true\n"
+          }
+          /^[[:space:]]*network_mode[[:space:]]*:/ { has_network_mode = 1 }
+          { text = text $0 "\n" }
+          END {
+            if (has_network_mode) {
+              print "Shared proxy networking cannot be used with network_mode" > "/dev/stderr"
+              exit 1
+            }
+            if (!index(text, network_block)) {
+              position = index(text, marker)
+              if (!position) {
+                print "Could not find insertion marker: " marker > "/dev/stderr"
+                exit 1
+              }
+              text = substr(text, 1, position - 1) network_block substr(text, position)
+            }
+            if (!index(text, top_networks)) {
+              text = text top_networks
+            }
+            printf "%s", text
+          }
+        ' "$DOCKER_COMPOSE_FILE" > "$PROXY_COMPOSE_TEMP"; then
+          mv "$PROXY_COMPOSE_TEMP" "$DOCKER_COMPOSE_FILE" || exit 1
+        else
+          rm -f "$PROXY_COMPOSE_TEMP"
+          exit 1
+        fi
+      fi
+    # END shared proxy network compose patch
     - |
       if ! cmp -s "$DOCKER_COMPOSE_FILE" ./docker-compose.yml 2>/dev/null; then
         cp "$DOCKER_COMPOSE_FILE" ./docker-compose.yml
