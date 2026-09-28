@@ -17,6 +17,8 @@ build_docker:
     EXPOSE_PORT_PATTERN: EXPOSE_PORT
     EXPOSE_PORT: $LOCAL_PORT
     ENV_FILE_: $ENV_FILE
+    USE_SHARED_PROXY_NETWORK: "true"
+    PROXY_ALIAS: "admin"
     GIT_TAG:
     BRANCH: master
 
