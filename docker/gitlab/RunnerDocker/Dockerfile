@@ -3,19 +3,16 @@ FROM ubuntu:22.04 AS my_runner
 # RUN sed -i 's/archive.ubuntu.com/linux-mirror.liara.ir\/repository/g' /etc/apt/sources.list
 # RUN sed -i 's/security.ubuntu.com/linux-mirror.liara.ir\/repository/g' /etc/apt/sources.list
 
-RUN apt update
-RUN apt upgrade -y
+RUN apt-get update
+RUN apt-get upgrade -y
 
-RUN apt install -y curl docker.io wget
+RUN apt-get install -y curl docker.io wget git rsync
 
 RUN curl https://codekit.s3.ir-thr-at1.arvanstorage.ir/gitlab-runner-linux-amd64 -o /usr/local/bin/gitlab-runner
 RUN chmod +x /usr/local/bin/gitlab-runner
 RUN useradd --comment 'GitLab Runner' --create-home gitlab-runner --shell /bin/bash
 RUN gitlab-runner install --user=gitlab-runner --working-directory=/home/gitlab-runner
-RUN apt install -y rsync
 # Docker part
-RUN wget https://codekit.s3.ir-thr-at1.arvanstorage.ir/gitlab-runner-helper:x86_64-v18.8.0.tar
-RUN docker image load -i gitlab-runner-helper\:x86_64-v18.8.0.tar
 #RUN apt install -y fuse-overlayfs
 RUN mkdir -p /etc/docker && \
   echo '{\n\
@@ -26,6 +23,7 @@ RUN mkdir -p /etc/docker && \
 }' > /etc/docker/daemon.json
 RUN usermod -aG docker gitlab-runner
 #ENV DOCKER_BUILDKIT=0
+
 
 RUN gitlab-runner start
 
